@@ -1,2 +1,2 @@
 # gvpy
-Go visits python
+Go Visits PYthon.
