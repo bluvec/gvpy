@@ -213,6 +213,7 @@ int __PyArray_XDECREF(PyObject *arr);
 
 // arrayobject: misc
 int __PyArray_Copy(PyObject *sarr, PyObject *darr);
+int __PyArray_IsFortran(PyObject *arr);
 
 #ifdef __cplusplus
 }

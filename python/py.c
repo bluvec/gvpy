@@ -564,3 +564,8 @@ int __PyArray_Copy(PyObject *sarr, PyObject *darr) {
 
   return 0;
 }
+
+int __PyArray_IsFortran(PyObject *arr) {
+  int flags = PyArray_FLAGS((PyArrayObject *)arr);
+  return (flags & NPY_ARRAY_F_CONTIGUOUS) != 0;
+}
