@@ -2,378 +2,435 @@ package gvpy
 
 import (
 	"fmt"
-	"gvpy/python"
+	"math/rand"
+	"os"
+	"runtime"
 	"testing"
 )
 
-func TestGvpy(t *testing.T) {
-	fmt.Println("=================================")
-	fmt.Println("Initialize")
-	initialize(t)
-
-	fmt.Println("=================================")
-	fmt.Println("testImport")
-	testImport(t)
-
-	fmt.Println("=================================")
-	fmt.Println("testFooFunc")
-	testFooFunc(t)
-
-	fmt.Println("=================================")
-	fmt.Println("testBarFunc")
-	testBarFunc(t)
-
-	fmt.Println("=================================")
-	fmt.Println("testBarNumPups")
-	testBarNumPups(t)
-
-	fmt.Println("=================================")
-	fmt.Println("testBarClass")
-	testBarClass(t)
-
-	fmt.Println("=================================")
-	fmt.Println("testBytes")
-	testBytes(t)
-
-	fmt.Println("=================================")
-	fmt.Println("testDict")
-	testDict(t)
-
-	fmt.Println("=================================")
-	fmt.Println("testNdarray")
-	testNdarray(t)
-
-	fmt.Println("=================================")
-	fmt.Println("Finalize")
-	finalize(t)
-}
-
-func initialize(t *testing.T) {
-	Initialize()
-	AddSysPathAtFront("./test")
-}
-
-func finalize(t *testing.T) {
-	Finalize()
-}
-
-func testImport(t *testing.T) {
-	barMod, err := Import("bar")
+func TestMain(m *testing.M) {
+	runtime.LockOSThread()
+	err := Initialize()
 	if err != nil {
-		PyErrPrint()
-		t.Errorf("%+v", err)
+		fmt.Println("Error to initialize python")
 		return
 	}
-	defer barMod.Clear()
-	fmt.Println(barMod)
+	AddSysPath("test")
+	tstate := SaveThread()
+
+	rc := m.Run()
+
+	RestoreThread(tstate)
+	Finalize()
+	runtime.UnlockOSThread()
+	os.Exit(rc)
 }
 
-func testFooFunc(t *testing.T) {
-	fooFunc, err := FromImportFunc("bar", "FooFunc")
+func TestImport(t *testing.T) {
+	runtime.LockOSThread()
+	defer runtime.UnlockOSThread()
+
+	gil := GILEnsure()
+	defer GILRelease(gil)
+
+	fooMod, err := Import("foo")
 	if err != nil {
+		PyErrPrint()
 		t.Error(err)
 		return
 	}
-	fmt.Println(fooFunc)
+	defer fooMod.Clear()
+	t.Log(fooMod)
+}
+
+func TestVar(t *testing.T) {
+	runtime.LockOSThread()
+	defer runtime.UnlockOSThread()
+
+	gil := GILEnsure()
+	defer GILRelease(gil)
+
+	fooMod, err := Import("foo")
+	if err != nil {
+		PyErrPrint()
+		t.Error(err)
+		return
+	}
+	defer fooMod.Clear()
+	t.Log(fooMod)
+
+	ret, err := fooMod.GetVar("num_pups")
+	if err != nil {
+		PyErrPrint()
+		t.Error(err)
+		return
+	}
+
+	numPups := ret.(int)
+	if numPups != 5 {
+		t.Error("incorrect num_pups:", numPups)
+		return
+	}
+
+	err = fooMod.SetVar("num_pups", 6)
+	if err != nil {
+		PyErrPrint()
+		t.Error(err)
+		return
+	}
+
+	ret, _ = fooMod.GetVar("num_pups")
+	newNumPups := ret.(int)
+	if newNumPups != 6 {
+		t.Error("incorrect newNumPups:", newNumPups)
+		return
+	}
+}
+
+func TestCallFunc(t *testing.T) {
+	runtime.LockOSThread()
+	defer runtime.UnlockOSThread()
+
+	t.Parallel()
+	gil := GILEnsure()
+	defer GILRelease(gil)
+
+	fooFunc, err := FromImportFunc("foo", "FooFunc")
+	if err != nil {
+		PyErrPrint()
+		t.Error(err)
+		return
+	}
+	defer fooFunc.Clear()
+	t.Log(fooFunc)
 
 	_, err = fooFunc.Call()
 	if err != nil {
+		PyErrPrint()
 		t.Error(err)
+		return
+	}
+
+	_, err = FromImportFunc("foo", "FooFunc2")
+	if err == nil {
+		t.Error("incorrect from import")
+	}
+}
+
+func TestCallFuncWithArgs(t *testing.T) {
+	runtime.LockOSThread()
+	defer runtime.UnlockOSThread()
+
+	t.Parallel()
+	gil := GILEnsure()
+	defer GILRelease(gil)
+
+	fooMod, _ := Import("foo")
+	defer fooMod.Clear()
+
+	name := "Marshal"
+	ret, err := fooMod.CallFunc("BarFunc", name)
+	if err != nil {
+		PyErrPrint()
+		t.Error(err)
+		return
+	}
+
+	msg := ret.(string)
+	if msg != "Hi, "+name {
+		t.Errorf("incorrect return value: %v\n", msg)
 		return
 	}
 }
 
-func testBarFunc(t *testing.T) {
-	barMod, err := Import("bar")
+func TestClass(t *testing.T) {
+	runtime.LockOSThread()
+	defer runtime.UnlockOSThread()
+
+	t.Parallel()
+	gil := GILEnsure()
+	defer GILRelease(gil)
+
+	fooClass, err := FromImportClass("foo", "FooClass")
 	if err != nil {
+		PyErrPrint()
 		t.Error(err)
 		return
 	}
-	defer barMod.Clear()
-
-	barFunc, err := barMod.GetFunc("BarFunc")
-	if err != nil {
-		t.Error(err)
-		return
-	}
-	defer barFunc.Clear()
-
-	barRet, err := barFunc.Call("Marshal")
-	if err != nil {
-		t.Errorf("error to call BarFunc: %v", err)
-		return
-	}
-	if barRet != "Hi, Marshal" {
-		t.Errorf("return value incorrect: %v", barRet)
-		return
-	}
-	fmt.Println(barRet)
-}
-
-func testBarNumPups(t *testing.T) {
-	barMod, err := Import("bar")
-	if err != nil {
-		t.Error(err)
-		return
-	}
-	defer barMod.Clear()
-
-	numPups, err := barMod.GetVar("num_pups")
-	if err != nil {
-		t.Error(err)
-		return
-	}
-	if numPups != 5 {
-		t.Errorf("num_pups: %v", numPups)
-		return
-	}
-	fmt.Println("numPups: ", numPups)
-
-	err = barMod.SetVar("num_pups", 6)
-	if err != nil {
-		t.Error(err)
-		return
-	}
-
-	newNumPups, err := barMod.GetVar("num_pups")
-	if err != nil {
-		t.Error(err)
-		return
-	}
-
-	if newNumPups != 6 {
-		t.Errorf("new_num_pups: %v", numPups)
-	}
-	fmt.Println("newNumPups: ", newNumPups)
-}
-
-func testBarClass(t *testing.T) {
-	barMod, err := Import("bar")
-	if err != nil {
-		t.Error(err)
-		return
-	}
-	defer barMod.Clear()
-
-	barClass, err := barMod.GetClass("BarClass")
-	if err != nil {
-		t.Error(err)
-		return
-	}
-	defer barClass.Clear()
+	defer fooClass.Clear()
+	t.Log(fooClass)
 
 	// static variable
-	staticVar, err := barClass.GetVar("prefix")
+	ret1, err := fooClass.GetVar("prefix")
 	if err != nil {
+		PyErrPrint()
 		t.Error(err)
 		return
 	}
-	if staticVar != "Hi," {
-		t.Errorf("error to get static var: '%v'", staticVar)
+	prefix, ok := ret1.(string)
+	if !ok {
+		t.Errorf("returned value type incorrect: %v\n", ret1)
+		return
+	}
+	if prefix != "Paw Patrol" {
+		t.Errorf("error to get static var: %v\n", prefix)
 		return
 	}
 
 	// static method
-	staticMethodRet, err := barClass.Call("Prefix")
+	ret2, err := fooClass.Call("Prefix")
 	if err != nil {
+		PyErrPrint()
 		t.Error(err)
 		return
 	}
-	if staticMethodRet != "Hi," {
-		t.Errorf("error to get static method: '%v'", staticMethodRet)
+	if ret2 != "Paw Patrol" {
+		t.Errorf("error to call static method: %v\n", ret2)
+		return
 	}
-	fmt.Println(staticMethodRet)
 
 	// instance
-	barInst, err := barClass.New("Rocky")
+	fooInst, err := fooClass.New("Rocky")
 	if err != nil {
+		PyErrPrint()
 		t.Error(err)
 		return
 	}
-	defer barInst.Clear()
-	fmt.Println(barInst)
+	defer fooInst.Clear()
+	t.Log(fooInst)
 
 	// instance var
-	instVar, err := barInst.GetVar("name_")
+	name_, err := fooInst.GetVar("name_")
 	if err != nil {
+		PyErrPrint()
 		t.Error(err)
 		return
 	}
-	if instVar != "Rocky" {
-		t.Errorf("error to get instance var: '%v'", instVar)
+	if name_ != "Rocky" {
+		t.Errorf("error to get instance var: %v\n", name_)
 		return
 	}
-	fmt.Println(instVar)
 
 	// instance method: name
-	nameRet, err := barInst.Call("name")
-	if err != nil {
-		t.Error(err)
-		return
-	}
-	if nameRet != "Rocky" {
-		t.Errorf("error to get instance method: '%v'", nameRet)
-		return
-	}
-
-	// instance method: print
-	_, err = barInst.Call("print", "!")
-	if err != nil {
-		t.Error(err)
-		return
-	}
-}
-
-func testBytes(t *testing.T) {
-	// Import module
-	fmt.Println("---------------------------------")
-	barMod, err := Import("bar")
-	if err != nil {
-		t.Errorf("%+v", err)
-		return
-	}
-	defer barMod.Clear()
-	fmt.Println(barMod)
-
-	// python: bar.ShowBytes
-	fmt.Println("---------------------------------")
-	x := []byte{49, 50, 51, 52, 53, 54, 55}
-	ret, err := barMod.CallFunc("ShowBytes", x)
-	if err != nil {
-		t.Errorf("error to call func: ShowBytes, err: %v", err)
-		return
-	}
-	retSlice := ret.([]byte)
-	y := string(retSlice)
-	if y != "1234567" {
-		t.Errorf("return value incorrect: %v", y)
-		return
-	}
-	fmt.Println(y)
-}
-
-func testDict(t *testing.T) {
-	barMod, err := Import("bar")
-	if err != nil {
-		t.Error(err)
-		return
-	}
-	defer barMod.Clear()
-
-	// python: bar.DictKeys
-	fmt.Println("---------------------------------")
-	dict := map[string]int{"a": 1, "b": 2, "c": 3}
-	keysRet, err := barMod.CallFunc("DictKeys", dict)
+	name, err := fooInst.Call("name")
 	if err != nil {
 		PyErrPrint()
 		t.Error(err)
 		return
 	}
-	fmt.Println(keysRet)
-	keys := keysRet.([]string)
-	for i := 0; i < 3; i++ {
+	if name != "Rocky" {
+		t.Errorf("error to get instance method: %v", name)
+		return
+	}
+}
+
+func TestListAndDict(t *testing.T) {
+	runtime.LockOSThread()
+	defer runtime.UnlockOSThread()
+
+	gil := GILEnsure()
+	defer GILRelease(gil)
+
+	fooMod, err := Import("foo")
+	if err != nil {
+		PyErrPrint()
+		t.Error(err)
+		return
+	}
+	defer fooMod.Clear()
+
+	// prepare a dict
+	dict := map[string]int{"Marshal": 1, "Rocky": 2, "Chase": 3}
+
+	// foo.DictKeys
+	keyRet, err := fooMod.CallFunc("DictKeys", dict)
+	if err != nil {
+		PyErrPrint()
+		t.Error(err)
+		return
+	}
+	keys, ok := keyRet.([]string)
+	if !ok {
+		t.Errorf("return value is not a list: %v\n", keyRet)
+		return
+	}
+	if len(keys) != len(dict) {
+		t.Error("return list len incorrect")
+		return
+	}
+
+	for i := 0; i < len(dict); i++ {
 		if _, ok := dict[keys[i]]; !ok {
-			t.Errorf("error to call bar.DictKeys: '%v'", keys)
+			t.Errorf("return key list incorrect: %v", keys)
 			return
 		}
 	}
 
-	// python: bar.DictKeysAndValues
-	fmt.Println("---------------------------------")
-	kvRet, err := barMod.CallFunc("DictKeysAndValues", dict)
+	// foo.DictKeysAndValues
+	kvRet, err := fooMod.CallFunc("DictKeysAndValues", dict)
 	if err != nil {
 		PyErrPrint()
 		t.Error(err)
 		return
 	}
-	kvRetTup := kvRet.([]interface{})
-	klist := kvRetTup[0].([]string)
-	vlist := kvRetTup[1].([]int)
-	fmt.Println(klist)
-	fmt.Println(vlist)
+	kvRetTup, ok := kvRet.([]interface{})
+	if !ok {
+		t.Errorf("return type incorrect: %v\n", kvRetTup)
+		return
+	}
+
+	klist, ok := kvRetTup[0].([]string)
+	if !ok {
+		t.Errorf("return type incorrect: %v\n", kvRetTup[0])
+		return
+	}
+	vlist, ok := kvRetTup[1].([]int)
+	if !ok {
+		t.Errorf("return type incorrect: %v\n", kvRetTup[1])
+		return
+	}
+
+	t.Log(klist)
+	t.Log(vlist)
 }
 
-func testNdarray(t *testing.T) {
-	barMod, err := Import("bar")
-	if err != nil {
-		t.Error(err)
-		return
-	}
-	defer barMod.Clear()
+func TestNdarray(t *testing.T) {
+	runtime.LockOSThread()
+	defer runtime.UnlockOSThread()
 
-	// python: GetNdarray
-	fmt.Println("---------------------------------")
+	gil := GILEnsure()
+	defer GILRelease(gil)
 
-	getNdarrayFunc, err := barMod.GetFunc("GetNdarray")
-	if err != nil {
-		PyErrPrint()
-		t.Errorf("error to get func: GetNdarray")
-		return
-	}
-	defer getNdarrayFunc.Clear()
-
-	// get a new ndarray
-	ndarrayObj1, err := call(getNdarrayFunc.pyobj)
+	fooMod, err := Import("foo")
 	if err != nil {
 		PyErrPrint()
 		t.Error(err)
 		return
 	}
-	defer ndarrayObj1.Py_Clear()
-	fmt.Println(ndarrayObj1)
+	defer fooMod.Clear()
 
-	// check ndarray type
-	if !python.PyArray_Check(ndarrayObj1) {
-		PyErrPrint()
-		t.Error("ndarrayObj1 is not an PyArrayObject")
+	x := make([]int, 10)
+	y := make([]int, 10)
+
+	xarr := NewNdarrayFromSlice_int(x, nil)
+	if xarr == nil {
+		t.Error("error to new ndarray from int slice")
 		return
 	}
 
-	ndim := python.PyArray_NDIM(ndarrayObj1)
-	if ndim != 2 {
-		PyErrPrint()
-		t.Errorf("error to get ndim. ndim: %v", ndim)
+	yarr := NewNdarrayFromSlice_int(y, nil)
+	if yarr == nil {
+		t.Error("error to new ndarray from int slice")
 		return
 	}
 
-	dtype := python.PyArray_TYPE(ndarrayObj1)
-	fmt.Println(dtype)
+	if xarr.Dtype() != NPY_INT {
+		t.Errorf("dtype incorrect: %v\n", xarr.Dtype())
+		return
+	}
 
-	// python: NdarrayAdd
-	fmt.Println("---------------------------------")
+	zarrRet, err := fooMod.CallFunc("NdarrayAdd", xarr, yarr)
+	if err != nil {
+		PyErrPrint()
+		t.Error(err)
+		return
+	}
+	zarr, ok := zarrRet.(Ndarray)
+	if !ok {
+		t.Error("error to cast ndarray")
+		return
+	}
+	if zarr.Dtype() != NPY_INT {
+		t.Errorf("dtype of returned ndarray is incorrect: %v\n", zarr.Dtype())
+		return
+	}
 
-	data1 := []byte{1, 2, 3, 4, 5, 6}
-	ndarr1 := NewNdarrayFromSlice_byte(data1, []int{2, 3})
-	fmt.Println(ndarr1)
-	fmt.Println(ndarr1.Shape())
+	z := zarr.AsSlice_int()
+	if len(z) != len(x) {
+		t.Errorf("len of returned ndarray incorrect: %v\n", len(z))
+		return
+	}
 
-	data2 := []int{21, 22, 23, 24, 25, 26}
-	ndarr2 := NewNdarrayFromSlice_int(data2, nil)
-	item2 := ndarr2.AsSlice_int()
-	for i := range data2 {
-		if data2[i] != item2[i] {
-			t.Errorf("data2 != item2 error. data2: %v, item2: %v", data2, item2)
+	for i := 0; i < len(x); i++ {
+		if z[i] != x[i]+y[i] {
+			t.Error("incorrect return values")
 			return
 		}
 	}
+}
 
-	data3 := []float64{10, 20, 30, 40}
-	ndarr3 := NewNdarrayFromSlice_float64(data3, nil)
-	item3 := ndarr3.AsSlice_float64()
-	for i := range data3 {
-		if data3[i] != item3[i] {
-			t.Errorf("data3 != item3 error. data3: %v, item3: %v", data3, item3)
-			return
-		}
-	}
+func TestNdarray2(t *testing.T) {
+	runtime.LockOSThread()
+	defer runtime.UnlockOSThread()
 
-	ret3, err := barMod.CallFunc("NdarrayAdd", ndarr3, 100)
+	gil := GILEnsure()
+	defer GILRelease(gil)
+
+	fooMod, err := Import("foo")
 	if err != nil {
 		PyErrPrint()
 		t.Error(err)
 		return
 	}
-	retArr3 := ret3.(Ndarray)
-	fmt.Println(retArr3.Shape())
-	fmt.Println(retArr3.Dtype())
+	defer fooMod.Clear()
+
+	x := make([]complex64, 10)
+	y := make([]complex64, 10)
+
+	for i := 0; i < len(x); i++ {
+		x[i] = complex(rand.Float32(), rand.Float32())
+		y[i] = complex(rand.Float32(), rand.Float32())
+	}
+
+	xarr := NewNdarrayFromSlice_complex64(x, []int{2, 5})
+	if xarr == nil {
+		t.Error("error to new ndarray from int slice")
+		return
+	}
+
+	yarr := NewNdarrayFromSlice_complex64(y, []int{2, 5})
+	if yarr == nil {
+		t.Error("error to new ndarray from int slice")
+		return
+	}
+
+	if xarr.Dtype() != NPY_COMPLEX64 {
+		t.Errorf("dtype incorrect: %v\n", xarr.Dtype())
+		return
+	}
+
+	zarrRet, err := fooMod.CallFunc("NdarrayAdd", xarr, yarr)
+	if err != nil {
+		PyErrPrint()
+		t.Error(err)
+		return
+	}
+	zarr, ok := zarrRet.(Ndarray)
+	if !ok {
+		t.Error("error to cast ndarray")
+		return
+	}
+	if zarr.Dtype() != NPY_COMPLEX64 {
+		t.Errorf("dtype of returned ndarray is incorrect: %v\n", zarr.Dtype())
+		return
+	}
+
+	shape := zarr.Shape()
+	if len(shape) != 2 || shape[0] != 2 || shape[1] != 5 {
+		t.Errorf("incorrect return shape: %v\n", shape)
+		return
+	}
+
+	z := zarr.AsSlice_complex64()
+	if len(z) != len(x) {
+		t.Errorf("len of returned ndarray incorrect: %v\n", len(z))
+		return
+	}
+
+	for i := 0; i < len(x); i++ {
+		if z[i] != x[i]+y[i] {
+			t.Error("incorrect return values")
+			return
+		}
+	}
 }

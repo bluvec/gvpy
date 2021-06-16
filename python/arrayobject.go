@@ -7,7 +7,44 @@ import (
 	"unsafe"
 )
 
-// NOTE: the hack method to convert C pointer to slice https://stackoverflow.com/questions/53238602/accessing-c-array-in-golang
+type NpyType int
+
+const (
+	NPY_BOOL        NpyType = 0
+	NPY_BYTE        NpyType = 1
+	NPY_UBYTE       NpyType = 2
+	NPY_SHORT       NpyType = 3
+	NPY_USHORT      NpyType = 4
+	NPY_INT         NpyType = 5
+	NPY_UINT        NpyType = 6
+	NPY_LONG        NpyType = 7
+	NPY_ULONG       NpyType = 8
+	NPY_LONGLONG    NpyType = 9
+	NPY_ULONGLONG   NpyType = 10
+	NPY_FLOAT       NpyType = 11
+	NPY_DOUBLE      NpyType = 12
+	NPY_LONGDOUBLE  NpyType = 13
+	NPY_CFLOAT      NpyType = 14
+	NPY_CDOUBLE     NpyType = 15
+	NPY_CLONGDOUBLE NpyType = 16
+	NPY_OBJECT      NpyType = 17
+	NPY_STRING      NpyType = 18
+	NPY_UNICODE     NpyType = 19
+	NPY_VOID        NpyType = 20
+
+	NPY_INT8       NpyType = NPY_BYTE
+	NPY_UINT8      NpyType = NPY_UBYTE
+	NPY_INT16      NpyType = NPY_SHORT
+	NPY_UINT16     NpyType = NPY_USHORT
+	NPY_INT32      NpyType = NPY_INT
+	NPY_UINT32     NpyType = NPY_UINT
+	NPY_INT64      NpyType = NPY_LONG
+	NPY_UINT64     NpyType = NPY_ULONG
+	NPY_FLOAT32    NpyType = NPY_FLOAT
+	NPY_FLOAT64    NpyType = NPY_DOUBLE
+	NPY_COMPLEX64  NpyType = NPY_CFLOAT
+	NPY_COMPLEX128 NpyType = NPY_CDOUBLE
+)
 
 // Ref: https://numpy.org/doc/stable/reference/c-api/array.html?#c.import_array
 // Ref: https://numpy.org/doc/stable/user/c-info.how-to-extend.html?#how-to-extend-numpy
@@ -59,527 +96,437 @@ func PyArray_Size(arr *PyObject) int {
 	return int(C.__PyArray_Size(go2c(arr)))
 }
 
+// NOTE: the hack method to convert C pointer to slice https://stackoverflow.com/questions/53238602/accessing-c-array-in-golang
 // Ref: https://numpy.org/doc/stable/reference/c-api/array.html#c.PyArray_DATA
-func PyArray_SetItems_byte(arr *PyObject, items []byte) {
-	dptr := unsafe.Pointer(C.__PyArray_DATA(go2c(arr)))
+func PyArray_SetItems_uint(arr *PyObject, items []uint) {
 	dtype := PyArray_TYPE(arr)
+	if dtype != int(NPY_UINT) {
+		panic("PyArray dtype mismatch")
+	}
 
+	dptr := unsafe.Pointer(C.__PyArray_DATA(go2c(arr)))
 	nitems := len(items)
-
-	switch dtype {
-	case 0: // NPY_BOOL
-		panic("NPY_BOOL not supported")
-	case 1: // NPY_BYTE
-		dslice := (*[1 << 30]C.char)(dptr)[:nitems:nitems]
-		for i := 0; i < nitems; i++ {
-			dslice[i] = C.char(items[i])
-		}
-
-	case 2: // NPY_UBYTE
-		dslice := (*[1 << 30]C.uchar)(dptr)[:nitems:nitems]
-		for i := 0; i < nitems; i++ {
-			dslice[i] = C.uchar(items[i])
-		}
-
-	case 3: // NPY_SHORT
-		dslice := (*[1 << 30]C.short)(dptr)[:nitems:nitems]
-		for i := 0; i < nitems; i++ {
-			dslice[i] = C.short(items[i])
-		}
-
-	case 4: // NPY_USHORT
-		dslice := (*[1 << 30]C.ushort)(dptr)[:nitems:nitems]
-		for i := 0; i < nitems; i++ {
-			dslice[i] = C.ushort(items[i])
-		}
-
-	case 5: // NPY_INT
-		dslice := (*[1 << 30]C.int)(dptr)[:nitems:nitems]
-		for i := 0; i < nitems; i++ {
-			dslice[i] = C.int(items[i])
-		}
-
-	case 6: // NPY_UINT
-		dslice := (*[1 << 30]C.uint)(dptr)[:len(items):len(items)]
-		for i := 0; i < len(items); i++ {
-			dslice[i] = C.uint(items[i])
-		}
-
-	case 7: // NPY_LONG
-		dslice := (*[1 << 30]C.long)(dptr)[:len(items):len(items)]
-		for i := 0; i < len(items); i++ {
-			dslice[i] = C.long(items[i])
-		}
-
-	case 8: //NPY_ULONG
-		dslice := (*[1 << 30]C.ulong)(dptr)[:len(items):len(items)]
-		for i := 0; i < len(items); i++ {
-			dslice[i] = C.ulong(items[i])
-		}
-
-	case 9: //NPY_LONGLONG
-		dslice := (*[1 << 30]C.longlong)(dptr)[:len(items):len(items)]
-		for i := 0; i < len(items); i++ {
-			dslice[i] = C.longlong(items[i])
-		}
-
-	case 10: //NPY_ULONGLONG
-		dslice := (*[1 << 30]C.ulonglong)(dptr)[:len(items):len(items)]
-		for i := 0; i < len(items); i++ {
-			dslice[i] = C.ulonglong(items[i])
-		}
-
-	case 11: //NPY_FLOAT
-		dslice := (*[1 << 30]C.float)(dptr)[:len(items):len(items)]
-		for i := 0; i < len(items); i++ {
-			dslice[i] = C.float(items[i])
-		}
-
-	case 12: //NPY_DOUBLE
-		dslice := (*[1 << 30]C.double)(dptr)[:len(items):len(items)]
-		for i := 0; i < len(items); i++ {
-			dslice[i] = C.double(items[i])
-		}
-
-	default:
-		panic(fmt.Sprintf("NpyType %v not supported", dtype))
+	dslice := (*[1 << 30]C.uint)(dptr)[:nitems:nitems]
+	for i := 0; i < nitems; i++ {
+		dslice[i] = C.uint(items[i])
 	}
 }
 
 func PyArray_SetItems_int(arr *PyObject, items []int) {
-	dptr := unsafe.Pointer(C.__PyArray_DATA(go2c(arr)))
 	dtype := PyArray_TYPE(arr)
+	if dtype != int(NPY_INT) {
+		panic("PyArray dtype mismatch")
+	}
 
+	dptr := unsafe.Pointer(C.__PyArray_DATA(go2c(arr)))
 	nitems := len(items)
+	dslice := (*[1 << 30]C.int)(dptr)[:nitems:nitems]
+	for i := 0; i < nitems; i++ {
+		dslice[i] = C.int(items[i])
+	}
+}
 
-	switch dtype {
-	case 0: // NPY_BOOL
-		panic("NPY_BOOL not supported")
-	case 1: // NPY_BYTE
-		dslice := (*[1 << 30]C.char)(dptr)[:nitems:nitems]
-		for i := 0; i < nitems; i++ {
-			dslice[i] = C.char(items[i])
-		}
+func PyArray_SetItems_uint8(arr *PyObject, items []uint8) {
+	dtype := PyArray_TYPE(arr)
+	if dtype != int(NPY_UINT8) {
+		panic("PyArray dtype mismatch")
+	}
 
-	case 2: // NPY_UBYTE
-		dslice := (*[1 << 30]C.uchar)(dptr)[:nitems:nitems]
-		for i := 0; i < nitems; i++ {
-			dslice[i] = C.uchar(items[i])
-		}
+	dptr := unsafe.Pointer(C.__PyArray_DATA(go2c(arr)))
+	nitems := len(items)
+	dslice := (*[1 << 30]C.uint8_t)(dptr)[:nitems:nitems]
+	for i := 0; i < nitems; i++ {
+		dslice[i] = C.uint8_t(items[i])
+	}
+}
 
-	case 3: // NPY_SHORT
-		dslice := (*[1 << 30]C.short)(dptr)[:nitems:nitems]
-		for i := 0; i < nitems; i++ {
-			dslice[i] = C.short(items[i])
-		}
+func PyArray_SetItems_int8(arr *PyObject, items []int8) {
+	dtype := PyArray_TYPE(arr)
+	if dtype != int(NPY_INT8) {
+		panic("PyArray dtype mismatch")
+	}
 
-	case 4: // NPY_USHORT
-		dslice := (*[1 << 30]C.ushort)(dptr)[:nitems:nitems]
-		for i := 0; i < nitems; i++ {
-			dslice[i] = C.ushort(items[i])
-		}
+	dptr := unsafe.Pointer(C.__PyArray_DATA(go2c(arr)))
+	nitems := len(items)
+	dslice := (*[1 << 30]C.int8_t)(dptr)[:nitems:nitems]
+	for i := 0; i < nitems; i++ {
+		dslice[i] = C.int8_t(items[i])
+	}
+}
 
-	case 5: // NPY_INT
-		dslice := (*[1 << 30]C.int)(dptr)[:nitems:nitems]
-		for i := 0; i < nitems; i++ {
-			dslice[i] = C.int(items[i])
-		}
+func PyArray_SetItems_uint16(arr *PyObject, items []uint16) {
+	dtype := PyArray_TYPE(arr)
+	if dtype != int(NPY_UINT16) {
+		panic("PyArray dtype mismatch")
+	}
 
-	case 6: // NPY_UINT
-		dslice := (*[1 << 30]C.uint)(dptr)[:len(items):len(items)]
-		for i := 0; i < len(items); i++ {
-			dslice[i] = C.uint(items[i])
-		}
+	dptr := unsafe.Pointer(C.__PyArray_DATA(go2c(arr)))
+	nitems := len(items)
+	dslice := (*[1 << 30]C.uint16_t)(dptr)[:nitems:nitems]
+	for i := 0; i < nitems; i++ {
+		dslice[i] = C.uint16_t(items[i])
+	}
+}
 
-	case 7: // NPY_LONG
-		dslice := (*[1 << 30]C.long)(dptr)[:len(items):len(items)]
-		for i := 0; i < len(items); i++ {
-			dslice[i] = C.long(items[i])
-		}
+func PyArray_SetItems_int16(arr *PyObject, items []int16) {
+	dtype := PyArray_TYPE(arr)
+	if dtype != int(NPY_INT16) {
+		panic("PyArray dtype mismatch")
+	}
 
-	case 8: //NPY_ULONG
-		dslice := (*[1 << 30]C.ulong)(dptr)[:len(items):len(items)]
-		for i := 0; i < len(items); i++ {
-			dslice[i] = C.ulong(items[i])
-		}
+	dptr := unsafe.Pointer(C.__PyArray_DATA(go2c(arr)))
+	nitems := len(items)
+	dslice := (*[1 << 30]C.int16_t)(dptr)[:nitems:nitems]
+	for i := 0; i < nitems; i++ {
+		dslice[i] = C.int16_t(items[i])
+	}
+}
 
-	case 9: //NPY_LONGLONG
-		dslice := (*[1 << 30]C.longlong)(dptr)[:len(items):len(items)]
-		for i := 0; i < len(items); i++ {
-			dslice[i] = C.longlong(items[i])
-		}
+func PyArray_SetItems_uint32(arr *PyObject, items []uint32) {
+	dtype := PyArray_TYPE(arr)
+	if dtype != int(NPY_UINT32) {
+		panic("PyArray dtype mismatch")
+	}
 
-	case 10: //NPY_ULONGLONG
-		dslice := (*[1 << 30]C.ulonglong)(dptr)[:len(items):len(items)]
-		for i := 0; i < len(items); i++ {
-			dslice[i] = C.ulonglong(items[i])
-		}
+	dptr := unsafe.Pointer(C.__PyArray_DATA(go2c(arr)))
+	nitems := len(items)
+	dslice := (*[1 << 30]C.uint32_t)(dptr)[:nitems:nitems]
+	for i := 0; i < nitems; i++ {
+		dslice[i] = C.uint32_t(items[i])
+	}
+}
 
-	case 11: //NPY_FLOAT
-		dslice := (*[1 << 30]C.float)(dptr)[:len(items):len(items)]
-		for i := 0; i < len(items); i++ {
-			dslice[i] = C.float(items[i])
-		}
+func PyArray_SetItems_int32(arr *PyObject, items []int32) {
+	dtype := PyArray_TYPE(arr)
+	if dtype != int(NPY_INT32) {
+		panic("PyArray dtype mismatch")
+	}
 
-	case 12: //NPY_DOUBLE
-		dslice := (*[1 << 30]C.double)(dptr)[:len(items):len(items)]
-		for i := 0; i < len(items); i++ {
-			dslice[i] = C.double(items[i])
-		}
+	dptr := unsafe.Pointer(C.__PyArray_DATA(go2c(arr)))
+	nitems := len(items)
+	dslice := (*[1 << 30]C.int32_t)(dptr)[:nitems:nitems]
+	for i := 0; i < nitems; i++ {
+		dslice[i] = C.int32_t(items[i])
+	}
+}
 
-	default:
-		panic(fmt.Sprintf("NpyType %v not supported", dtype))
+func PyArray_SetItems_uint64(arr *PyObject, items []uint64) {
+	dtype := PyArray_TYPE(arr)
+	if dtype != int(NPY_UINT64) {
+		panic("PyArray dtype mismatch")
+	}
+
+	dptr := unsafe.Pointer(C.__PyArray_DATA(go2c(arr)))
+	nitems := len(items)
+	dslice := (*[1 << 30]C.uint64_t)(dptr)[:nitems:nitems]
+	for i := 0; i < nitems; i++ {
+		dslice[i] = C.uint64_t(items[i])
+	}
+}
+
+func PyArray_SetItems_int64(arr *PyObject, items []int64) {
+	dtype := PyArray_TYPE(arr)
+	if dtype != int(NPY_INT64) {
+		panic("PyArray dtype mismatch")
+	}
+
+	dptr := unsafe.Pointer(C.__PyArray_DATA(go2c(arr)))
+	nitems := len(items)
+	dslice := (*[1 << 30]C.int64_t)(dptr)[:nitems:nitems]
+	for i := 0; i < nitems; i++ {
+		dslice[i] = C.int64_t(items[i])
+	}
+}
+
+func PyArray_SetItems_float32(arr *PyObject, items []float32) {
+	dtype := PyArray_TYPE(arr)
+	if dtype != int(NPY_FLOAT32) {
+		panic("PyArray dtype mismatch")
+	}
+
+	dptr := unsafe.Pointer(C.__PyArray_DATA(go2c(arr)))
+	nitems := len(items)
+	dslice := (*[1 << 30]C.float)(dptr)[:nitems:nitems]
+	for i := 0; i < nitems; i++ {
+		dslice[i] = C.float(items[i])
 	}
 }
 
 func PyArray_SetItems_float64(arr *PyObject, items []float64) {
-	dptr := unsafe.Pointer(C.__PyArray_DATA(go2c(arr)))
 	dtype := PyArray_TYPE(arr)
+	if dtype != int(NPY_FLOAT64) {
+		panic("PyArray dtype mismatch")
+	}
 
+	dptr := unsafe.Pointer(C.__PyArray_DATA(go2c(arr)))
 	nitems := len(items)
-
-	switch dtype {
-	case 0: // NPY_BOOL
-		panic("NPY_BOOL not supported")
-	case 1: // NPY_BYTE
-		dslice := (*[1 << 30]C.char)(dptr)[:nitems:nitems]
-		for i := 0; i < nitems; i++ {
-			dslice[i] = C.char(items[i])
-		}
-
-	case 2: // NPY_UBYTE
-		dslice := (*[1 << 30]C.uchar)(dptr)[:nitems:nitems]
-		for i := 0; i < nitems; i++ {
-			dslice[i] = C.uchar(items[i])
-		}
-
-	case 3: // NPY_SHORT
-		dslice := (*[1 << 30]C.short)(dptr)[:nitems:nitems]
-		for i := 0; i < nitems; i++ {
-			dslice[i] = C.short(items[i])
-		}
-
-	case 4: // NPY_USHORT
-		dslice := (*[1 << 30]C.ushort)(dptr)[:nitems:nitems]
-		for i := 0; i < nitems; i++ {
-			dslice[i] = C.ushort(items[i])
-		}
-
-	case 5: // NPY_INT
-		dslice := (*[1 << 30]C.int)(dptr)[:nitems:nitems]
-		for i := 0; i < nitems; i++ {
-			dslice[i] = C.int(items[i])
-		}
-
-	case 6: // NPY_UINT
-		dslice := (*[1 << 30]C.uint)(dptr)[:len(items):len(items)]
-		for i := 0; i < len(items); i++ {
-			dslice[i] = C.uint(items[i])
-		}
-
-	case 7: // NPY_LONG
-		dslice := (*[1 << 30]C.long)(dptr)[:len(items):len(items)]
-		for i := 0; i < len(items); i++ {
-			dslice[i] = C.long(items[i])
-		}
-
-	case 8: //NPY_ULONG
-		dslice := (*[1 << 30]C.ulong)(dptr)[:len(items):len(items)]
-		for i := 0; i < len(items); i++ {
-			dslice[i] = C.ulong(items[i])
-		}
-
-	case 9: //NPY_LONGLONG
-		dslice := (*[1 << 30]C.longlong)(dptr)[:len(items):len(items)]
-		for i := 0; i < len(items); i++ {
-			dslice[i] = C.longlong(items[i])
-		}
-
-	case 10: //NPY_ULONGLONG
-		dslice := (*[1 << 30]C.ulonglong)(dptr)[:len(items):len(items)]
-		for i := 0; i < len(items); i++ {
-			dslice[i] = C.ulonglong(items[i])
-		}
-
-	case 11: //NPY_FLOAT
-		dslice := (*[1 << 30]C.float)(dptr)[:len(items):len(items)]
-		for i := 0; i < len(items); i++ {
-			dslice[i] = C.float(items[i])
-		}
-
-	case 12: //NPY_DOUBLE
-		dslice := (*[1 << 30]C.double)(dptr)[:len(items):len(items)]
-		for i := 0; i < len(items); i++ {
-			dslice[i] = C.double(items[i])
-		}
-
-	default:
-		panic(fmt.Sprintf("NpyType %v not supported", dtype))
+	dslice := (*[1 << 30]C.double)(dptr)[:nitems:nitems]
+	for i := 0; i < nitems; i++ {
+		dslice[i] = C.double(items[i])
 	}
 }
 
-func PyArray_GetItems_byte(arr *PyObject) []byte {
-	dptr := unsafe.Pointer(C.__PyArray_DATA(go2c(arr)))
+func PyArray_SetItems_complex64(arr *PyObject, items []complex64) {
 	dtype := PyArray_TYPE(arr)
+	if dtype != int(NPY_COMPLEX64) {
+		panic("PyArray dtype mismatch")
+	}
+
+	dptr := unsafe.Pointer(C.__PyArray_DATA(go2c(arr)))
+	nitems := len(items)
+	dslice := (*[1 << 30]C.complexfloat)(dptr)[:nitems:nitems]
+	for i := 0; i < nitems; i++ {
+		dslice[i] = C.complexfloat(items[i])
+	}
+}
+
+func PyArray_SetItems_complex128(arr *PyObject, items []complex128) {
+	dtype := PyArray_TYPE(arr)
+	if dtype != int(NPY_COMPLEX128) {
+		panic("PyArray dtype mismatch")
+	}
+
+	dptr := unsafe.Pointer(C.__PyArray_DATA(go2c(arr)))
+	nitems := len(items)
+	dslice := (*[1 << 30]C.complexdouble)(dptr)[:nitems:nitems]
+	for i := 0; i < nitems; i++ {
+		dslice[i] = C.complexdouble(items[i])
+	}
+}
+
+func PyArray_GetItems_uint(arr *PyObject) []uint {
+	dtype := PyArray_TYPE(arr)
+	if dtype != int(NPY_UINT) {
+		panic("PyArray dtype mismatch")
+	}
+
+	dptr := unsafe.Pointer(C.__PyArray_DATA(go2c(arr)))
 	nitems := PyArray_Size(arr)
-
-	items := make([]byte, nitems)
-
-	switch dtype {
-	case 0: // NPY_BOOL
-		panic("NPY_BOOL not supported")
-	case 1: // NPY_BYTE
-		dslice := (*[1 << 30]C.char)(dptr)[:nitems:nitems]
-		for i := 0; i < nitems; i++ {
-			items[i] = byte(dslice[i])
-		}
-
-	case 2: // NPY_UBYTE
-		dslice := (*[1 << 30]C.uchar)(dptr)[:nitems:nitems]
-		for i := 0; i < nitems; i++ {
-			items[i] = byte(dslice[i])
-		}
-
-	case 3: // NPY_SHORT
-		dslice := (*[1 << 30]C.short)(dptr)[:nitems:nitems]
-		for i := 0; i < nitems; i++ {
-			items[i] = byte(dslice[i])
-		}
-
-	case 4: // NPY_USHORT
-		dslice := (*[1 << 30]C.ushort)(dptr)[:nitems:nitems]
-		for i := 0; i < nitems; i++ {
-			items[i] = byte(dslice[i])
-		}
-
-	case 5: // NPY_INT
-		dslice := (*[1 << 30]C.int)(dptr)[:nitems:nitems]
-		for i := 0; i < nitems; i++ {
-			items[i] = byte(dslice[i])
-		}
-
-	case 6: // NPY_UINT
-		dslice := (*[1 << 30]C.uint)(dptr)[:len(items):len(items)]
-		for i := 0; i < len(items); i++ {
-			items[i] = byte(dslice[i])
-		}
-
-	case 7: // NPY_LONG
-		dslice := (*[1 << 30]C.long)(dptr)[:len(items):len(items)]
-		for i := 0; i < len(items); i++ {
-			items[i] = byte(dslice[i])
-		}
-
-	case 8: //NPY_ULONG
-		dslice := (*[1 << 30]C.ulong)(dptr)[:len(items):len(items)]
-		for i := 0; i < len(items); i++ {
-			items[i] = byte(dslice[i])
-		}
-
-	case 9: //NPY_LONGLONG
-		dslice := (*[1 << 30]C.longlong)(dptr)[:len(items):len(items)]
-		for i := 0; i < len(items); i++ {
-			items[i] = byte(dslice[i])
-		}
-
-	case 10: //NPY_ULONGLONG
-		dslice := (*[1 << 30]C.ulonglong)(dptr)[:len(items):len(items)]
-		for i := 0; i < len(items); i++ {
-			items[i] = byte(dslice[i])
-		}
-
-	case 11: //NPY_FLOAT
-		dslice := (*[1 << 30]C.float)(dptr)[:len(items):len(items)]
-		for i := 0; i < len(items); i++ {
-			items[i] = byte(dslice[i])
-		}
-
-	case 12: //NPY_DOUBLE
-		dslice := (*[1 << 30]C.double)(dptr)[:len(items):len(items)]
-		for i := 0; i < len(items); i++ {
-			items[i] = byte(dslice[i])
-		}
-
-	default:
-		panic(fmt.Sprintf("NpyType %v not supported", dtype))
+	items := make([]uint, nitems)
+	dslice := (*[1 << 30]C.uint)(dptr)[:nitems:nitems]
+	for i := 0; i < nitems; i++ {
+		items[i] = uint(dslice[i])
 	}
 
 	return items
 }
 
 func PyArray_GetItems_int(arr *PyObject) []int {
-	dptr := unsafe.Pointer(C.__PyArray_DATA(go2c(arr)))
 	dtype := PyArray_TYPE(arr)
+	if dtype != int(NPY_INT) {
+		panic("PyArray dtype mismatch")
+	}
+
+	dptr := unsafe.Pointer(C.__PyArray_DATA(go2c(arr)))
 	nitems := PyArray_Size(arr)
-
 	items := make([]int, nitems)
+	dslice := (*[1 << 30]C.int)(dptr)[:nitems:nitems]
+	for i := 0; i < nitems; i++ {
+		items[i] = int(dslice[i])
+	}
 
-	switch dtype {
-	case 0: // NPY_BOOL
-		panic("NPY_BOOL not supported")
-	case 1: // NPY_BYTE
-		dslice := (*[1 << 30]C.char)(dptr)[:nitems:nitems]
-		for i := 0; i < nitems; i++ {
-			items[i] = int(dslice[i])
-		}
+	return items
+}
 
-	case 2: // NPY_UBYTE
-		dslice := (*[1 << 30]C.uchar)(dptr)[:nitems:nitems]
-		for i := 0; i < nitems; i++ {
-			items[i] = int(dslice[i])
-		}
+func PyArray_GetItems_uint8(arr *PyObject) []uint8 {
+	dtype := PyArray_TYPE(arr)
+	if dtype != int(NPY_UINT8) {
+		panic("PyArray dtype mismatch")
+	}
 
-	case 3: // NPY_SHORT
-		dslice := (*[1 << 30]C.short)(dptr)[:nitems:nitems]
-		for i := 0; i < nitems; i++ {
-			items[i] = int(dslice[i])
-		}
+	dptr := unsafe.Pointer(C.__PyArray_DATA(go2c(arr)))
+	nitems := PyArray_Size(arr)
+	items := make([]uint8, nitems)
+	dslice := (*[1 << 30]C.uint8_t)(dptr)[:nitems:nitems]
+	for i := 0; i < nitems; i++ {
+		items[i] = uint8(dslice[i])
+	}
 
-	case 4: // NPY_USHORT
-		dslice := (*[1 << 30]C.ushort)(dptr)[:nitems:nitems]
-		for i := 0; i < nitems; i++ {
-			items[i] = int(dslice[i])
-		}
+	return items
+}
 
-	case 5: // NPY_INT
-		dslice := (*[1 << 30]C.int)(dptr)[:nitems:nitems]
-		for i := 0; i < nitems; i++ {
-			items[i] = int(dslice[i])
-		}
+func PyArray_GetItems_int8(arr *PyObject) []int8 {
+	dtype := PyArray_TYPE(arr)
+	if dtype != int(NPY_INT8) {
+		panic("PyArray dtype mismatch")
+	}
 
-	case 6: // NPY_UINT
-		dslice := (*[1 << 30]C.uint)(dptr)[:len(items):len(items)]
-		for i := 0; i < len(items); i++ {
-			items[i] = int(dslice[i])
-		}
+	dptr := unsafe.Pointer(C.__PyArray_DATA(go2c(arr)))
+	nitems := PyArray_Size(arr)
+	items := make([]int8, nitems)
+	dslice := (*[1 << 30]C.int8_t)(dptr)[:nitems:nitems]
+	for i := 0; i < nitems; i++ {
+		items[i] = int8(dslice[i])
+	}
 
-	case 7: // NPY_LONG
-		dslice := (*[1 << 30]C.long)(dptr)[:len(items):len(items)]
-		for i := 0; i < len(items); i++ {
-			items[i] = int(dslice[i])
-		}
+	return items
+}
 
-	case 8: //NPY_ULONG
-		dslice := (*[1 << 30]C.ulong)(dptr)[:len(items):len(items)]
-		for i := 0; i < len(items); i++ {
-			items[i] = int(dslice[i])
-		}
+func PyArray_GetItems_uint16(arr *PyObject) []uint16 {
+	dtype := PyArray_TYPE(arr)
+	if dtype != int(NPY_UINT16) {
+		panic("PyArray dtype mismatch")
+	}
 
-	case 9: //NPY_LONGLONG
-		dslice := (*[1 << 30]C.longlong)(dptr)[:len(items):len(items)]
-		for i := 0; i < len(items); i++ {
-			items[i] = int(dslice[i])
-		}
+	dptr := unsafe.Pointer(C.__PyArray_DATA(go2c(arr)))
+	nitems := PyArray_Size(arr)
+	items := make([]uint16, nitems)
+	dslice := (*[1 << 30]C.uint16_t)(dptr)[:nitems:nitems]
+	for i := 0; i < nitems; i++ {
+		items[i] = uint16(dslice[i])
+	}
 
-	case 10: //NPY_ULONGLONG
-		dslice := (*[1 << 30]C.ulonglong)(dptr)[:len(items):len(items)]
-		for i := 0; i < len(items); i++ {
-			items[i] = int(dslice[i])
-		}
+	return items
+}
 
-	case 11: //NPY_FLOAT
-		dslice := (*[1 << 30]C.float)(dptr)[:len(items):len(items)]
-		for i := 0; i < len(items); i++ {
-			items[i] = int(dslice[i])
-		}
+func PyArray_GetItems_int16(arr *PyObject) []int16 {
+	dtype := PyArray_TYPE(arr)
+	if dtype != int(NPY_INT16) {
+		panic("PyArray dtype mismatch")
+	}
 
-	case 12: //NPY_DOUBLE
-		dslice := (*[1 << 30]C.double)(dptr)[:len(items):len(items)]
-		for i := 0; i < len(items); i++ {
-			items[i] = int(dslice[i])
-		}
+	dptr := unsafe.Pointer(C.__PyArray_DATA(go2c(arr)))
+	nitems := PyArray_Size(arr)
+	items := make([]int16, nitems)
+	dslice := (*[1 << 30]C.int16_t)(dptr)[:nitems:nitems]
+	for i := 0; i < nitems; i++ {
+		items[i] = int16(dslice[i])
+	}
 
-	default:
-		panic(fmt.Sprintf("NpyType %v not supported", dtype))
+	return items
+}
+
+func PyArray_GetItems_uint32(arr *PyObject) []uint32 {
+	dtype := PyArray_TYPE(arr)
+	if dtype != int(NPY_UINT32) {
+		panic("PyArray dtype mismatch")
+	}
+
+	dptr := unsafe.Pointer(C.__PyArray_DATA(go2c(arr)))
+	nitems := PyArray_Size(arr)
+	items := make([]uint32, nitems)
+	dslice := (*[1 << 30]C.uint32_t)(dptr)[:nitems:nitems]
+	for i := 0; i < nitems; i++ {
+		items[i] = uint32(dslice[i])
+	}
+
+	return items
+}
+
+func PyArray_GetItems_int32(arr *PyObject) []int32 {
+	dtype := PyArray_TYPE(arr)
+	if dtype != int(NPY_INT32) {
+		panic("PyArray dtype mismatch")
+	}
+
+	dptr := unsafe.Pointer(C.__PyArray_DATA(go2c(arr)))
+	nitems := PyArray_Size(arr)
+	items := make([]int32, nitems)
+	dslice := (*[1 << 30]C.int32_t)(dptr)[:nitems:nitems]
+	for i := 0; i < nitems; i++ {
+		items[i] = int32(dslice[i])
+	}
+
+	return items
+}
+
+func PyArray_GetItems_uint64(arr *PyObject) []uint64 {
+	dtype := PyArray_TYPE(arr)
+	if dtype != int(NPY_UINT64) {
+		panic("PyArray dtype mismatch")
+	}
+
+	dptr := unsafe.Pointer(C.__PyArray_DATA(go2c(arr)))
+	nitems := PyArray_Size(arr)
+	items := make([]uint64, nitems)
+	dslice := (*[1 << 30]C.uint64_t)(dptr)[:nitems:nitems]
+	for i := 0; i < nitems; i++ {
+		items[i] = uint64(dslice[i])
+	}
+
+	return items
+}
+
+func PyArray_GetItems_int64(arr *PyObject) []int64 {
+	dtype := PyArray_TYPE(arr)
+	if dtype != int(NPY_INT64) {
+		panic("PyArray dtype mismatch")
+	}
+
+	dptr := unsafe.Pointer(C.__PyArray_DATA(go2c(arr)))
+	nitems := PyArray_Size(arr)
+	items := make([]int64, nitems)
+	dslice := (*[1 << 30]C.int64_t)(dptr)[:nitems:nitems]
+	for i := 0; i < nitems; i++ {
+		items[i] = int64(dslice[i])
+	}
+
+	return items
+}
+
+func PyArray_GetItems_float32(arr *PyObject) []float32 {
+	dtype := PyArray_TYPE(arr)
+	if dtype != int(NPY_FLOAT32) {
+		panic("PyArray dtype mismatch")
+	}
+
+	dptr := unsafe.Pointer(C.__PyArray_DATA(go2c(arr)))
+	nitems := PyArray_Size(arr)
+	items := make([]float32, nitems)
+	dslice := (*[1 << 30]C.float)(dptr)[:nitems:nitems]
+	for i := 0; i < nitems; i++ {
+		items[i] = float32(dslice[i])
 	}
 
 	return items
 }
 
 func PyArray_GetItems_float64(arr *PyObject) []float64 {
-	dptr := unsafe.Pointer(C.__PyArray_DATA(go2c(arr)))
 	dtype := PyArray_TYPE(arr)
+	if dtype != int(NPY_FLOAT64) {
+		panic("PyArray dtype mismatch")
+	}
+
+	dptr := unsafe.Pointer(C.__PyArray_DATA(go2c(arr)))
 	nitems := PyArray_Size(arr)
-
 	items := make([]float64, nitems)
+	dslice := (*[1 << 30]C.double)(dptr)[:nitems:nitems]
+	for i := 0; i < nitems; i++ {
+		items[i] = float64(dslice[i])
+	}
 
-	switch dtype {
-	case 0: // NPY_BOOL
-		panic("NPY_BOOL not supported")
-	case 1: // NPY_BYTE
-		dslice := (*[1 << 30]C.char)(dptr)[:nitems:nitems]
-		for i := 0; i < nitems; i++ {
-			items[i] = float64(dslice[i])
-		}
+	return items
+}
 
-	case 2: // NPY_UBYTE
-		dslice := (*[1 << 30]C.uchar)(dptr)[:nitems:nitems]
-		for i := 0; i < nitems; i++ {
-			items[i] = float64(dslice[i])
-		}
+func PyArray_GetItems_complex64(arr *PyObject) []complex64 {
+	dtype := PyArray_TYPE(arr)
+	if dtype != int(NPY_COMPLEX64) {
+		panic("PyArray dtype mismatch")
+	}
 
-	case 3: // NPY_SHORT
-		dslice := (*[1 << 30]C.short)(dptr)[:nitems:nitems]
-		for i := 0; i < nitems; i++ {
-			items[i] = float64(dslice[i])
-		}
+	dptr := unsafe.Pointer(C.__PyArray_DATA(go2c(arr)))
+	nitems := PyArray_Size(arr)
+	items := make([]complex64, nitems)
+	dslice := (*[1 << 30]C.complexfloat)(dptr)[:nitems:nitems]
+	for i := 0; i < nitems; i++ {
+		items[i] = complex64(dslice[i])
+	}
 
-	case 4: // NPY_USHORT
-		dslice := (*[1 << 30]C.ushort)(dptr)[:nitems:nitems]
-		for i := 0; i < nitems; i++ {
-			items[i] = float64(dslice[i])
-		}
+	return items
+}
 
-	case 5: // NPY_INT
-		dslice := (*[1 << 30]C.int)(dptr)[:nitems:nitems]
-		for i := 0; i < nitems; i++ {
-			items[i] = float64(dslice[i])
-		}
+func PyArray_GetItems_complex128(arr *PyObject) []complex128 {
+	dtype := PyArray_TYPE(arr)
+	if dtype != int(NPY_COMPLEX128) {
+		panic("PyArray dtype mismatch")
+	}
 
-	case 6: // NPY_UINT
-		dslice := (*[1 << 30]C.uint)(dptr)[:len(items):len(items)]
-		for i := 0; i < len(items); i++ {
-			items[i] = float64(dslice[i])
-		}
-
-	case 7: // NPY_LONG
-		dslice := (*[1 << 30]C.long)(dptr)[:len(items):len(items)]
-		for i := 0; i < len(items); i++ {
-			items[i] = float64(dslice[i])
-		}
-
-	case 8: //NPY_ULONG
-		dslice := (*[1 << 30]C.ulong)(dptr)[:len(items):len(items)]
-		for i := 0; i < len(items); i++ {
-			items[i] = float64(dslice[i])
-		}
-
-	case 9: //NPY_LONGLONG
-		dslice := (*[1 << 30]C.longlong)(dptr)[:len(items):len(items)]
-		for i := 0; i < len(items); i++ {
-			items[i] = float64(dslice[i])
-		}
-
-	case 10: //NPY_ULONGLONG
-		dslice := (*[1 << 30]C.ulonglong)(dptr)[:len(items):len(items)]
-		for i := 0; i < len(items); i++ {
-			items[i] = float64(dslice[i])
-		}
-
-	case 11: //NPY_FLOAT
-		dslice := (*[1 << 30]C.float)(dptr)[:len(items):len(items)]
-		for i := 0; i < len(items); i++ {
-			items[i] = float64(dslice[i])
-		}
-
-	case 12: //NPY_DOUBLE
-		dslice := (*[1 << 30]C.double)(dptr)[:len(items):len(items)]
-		for i := 0; i < len(items); i++ {
-			items[i] = float64(dslice[i])
-		}
-
-	default:
-		panic(fmt.Sprintf("NpyType %v not supported", dtype))
+	dptr := unsafe.Pointer(C.__PyArray_DATA(go2c(arr)))
+	nitems := PyArray_Size(arr)
+	items := make([]complex128, nitems)
+	dslice := (*[1 << 30]C.complexdouble)(dptr)[:nitems:nitems]
+	for i := 0; i < nitems; i++ {
+		items[i] = complex128(dslice[i])
 	}
 
 	return items
@@ -639,4 +586,12 @@ func PyArray_Copy(sarr *PyObject, darr *PyObject) error {
 	} else {
 		return fmt.Errorf("error to copy ndarray")
 	}
+}
+
+func PyArray_Flags(arr *PyObject) int {
+	return int(C.__PyArray_FLAGS(go2c(arr)))
+}
+
+func PyArray_IsFortran(arr *PyObject) bool {
+	return C.__PyArray_IsFortran(go2c(arr)) != C.int(0)
 }
