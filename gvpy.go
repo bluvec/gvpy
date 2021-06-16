@@ -17,17 +17,19 @@ func Initialize() error {
 		return fmt.Errorf("gvpy: error to initialize the python interpreter")
 	}
 
-	// Ref: https://docs.python.org/3/c-api/init.html?highlight=pyeval_initthreads#c.PyEval_InitThreads
-	// make sure the GIL is correctly initialized: python < 3.7
-	// if !python.PyEval_ThreadsInitialized() {
-	// 	python.PyEval_InitThreads()
-	// }
-	// if !python.PyEval_ThreadsInitialized() {
-	// 	return fmt.Errorf("gvpy: error to initialize the python GIL")
-	// }
-
 	// Initialize numpy module and PyArray functions
 	return python.PyArray_import_array()
+}
+
+// Ref: https://docs.python.org/3/c-api/init.html?#c.PyEval_InitThreads
+// make sure the GIL is correctly initialized: python < 3.7
+// Call this function to initialize GIL if your python version is less than 3.7.
+func InitThreads() error {
+	python.PyEval_InitThreads()
+	if !python.PyEval_ThreadsInitialized() {
+		return fmt.Errorf("gvpy: error to initialize the python GIL")
+	}
+	return nil
 }
 
 func Finalize() {
