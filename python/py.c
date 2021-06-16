@@ -507,27 +507,27 @@ PyObject *__PyArray_SimpleNew(int nd, npy_intp *dims, int typenum) {
 
 PyObject *__PyArray_SimpleNewFromData(int nd, npy_intp const *dims, int typenum,
                                       void *data) {
-  return PyArray_SimpleNewFromData(nd, dims, typenum, data);
+  return PyArray_SimpleNewFromData(nd, (npy_intp *)dims, typenum, data);
 }
 
 PyObject *__PyArray_Zeros(int nd, npy_intp const *dims, PyArray_Descr *dtype,
                           int fortran) {
-  return PyArray_Zeros(nd, dims, dtype, fortran);
+  return PyArray_Zeros(nd, (npy_intp *)dims, dtype, fortran);
 }
 
 PyObject *__PyArray_ZEROS(int nd, npy_intp const *dims, int type_num,
                           int fortran) {
-  return PyArray_ZEROS(nd, dims, type_num, fortran);
+  return PyArray_ZEROS(nd, (npy_intp *)dims, type_num, fortran);
 }
 
 PyObject *__PyArray_Empty(int nd, npy_intp const *dims, PyArray_Descr *dtype,
                           int fortran) {
-  return PyArray_Empty(nd, dims, dtype, fortran);
+  return PyArray_Empty(nd, (npy_intp *)dims, dtype, fortran);
 }
 
 PyObject *__PyArray_EMPTY(int nd, npy_intp const *dims, int typenum,
                           int fortran) {
-  return PyArray_EMPTY(nd, dims, typenum, fortran);
+  return PyArray_EMPTY(nd, (npy_intp *)dims, typenum, fortran);
 }
 
 PyObject *__PyArray_Arange(double start, double stop, double step,
