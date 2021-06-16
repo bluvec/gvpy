@@ -1,35 +1,40 @@
+import numpy as np
+
+num_pups = 5
+
+
 def FooFunc():
-    print("Hi, Raw Patrol!")
+    print("Python: Hi, Paw Patrol!")
 
 
 def BarFunc(name):
     s = "Hi, " + name
-    print("Python: ", s)
+    print("Python:", s)
     return s
 
 
 class FooClass:
-    def __init__(self):
-        self.name_ = "Rubble"
+    prefix = "Paw Patrol"
 
-    def print(self):
-        print("Python: ", self.name_)
-
-    def name(self):
-        return self.name_
-
-
-class BarClass:
     def __init__(self, name):
         self.name_ = name
 
-    def print(self, prefix):
-        print("Python: ", prefix, self.name_)
-
     def name(self):
         return self.name_
 
+    @staticmethod
+    def Prefix():
+        return FooClass.prefix
 
-def ShowBytes(bs):
-    print("Python: ", bs)
-    return bs
+
+def DictKeys(d: dict):
+    return list(d.keys())
+
+
+def DictKeysAndValues(d: dict):
+    return list(d.keys()), list(d.values())
+
+
+def NdarrayAdd(x: np.ndarray, y: np.ndarray) -> np.ndarray:
+    z = x + y
+    return z

@@ -313,7 +313,7 @@ func PyArray_GetItems_uint(arr *PyObject) []uint {
 
 func PyArray_GetItems_int(arr *PyObject) []int {
 	dtype := PyArray_TYPE(arr)
-	if dtype != int(NPY_UINT) {
+	if dtype != int(NPY_INT) {
 		panic("PyArray dtype mismatch")
 	}
 
