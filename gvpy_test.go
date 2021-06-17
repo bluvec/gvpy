@@ -13,7 +13,7 @@ func TestMain(m *testing.M) {
 	err := Initialize()
 	if err != nil {
 		fmt.Println("Error to initialize python")
-		return
+		os.Exit(1)
 	}
 	AddSysPath("test")
 	tstate := SaveThread()
