@@ -24,7 +24,7 @@ jobs:
           python3 --version
           python3 -m pip install numpy
           PYTHONVER=$(python3 --version | grep -Po "(?<=Python )3.[0-9]+")
-          export CGO_CFLAGS="-D${HOME}/.local/lib/python${PYTHONVER}/site-packages/numpy/core/include"
+          export CGO_CFLAGS="-I${HOME}/.local/lib/python${PYTHONVER}/site-packages/numpy/core/include"
           go build -v .
 
       - name: Test
