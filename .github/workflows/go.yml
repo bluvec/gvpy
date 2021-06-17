@@ -19,18 +19,11 @@ jobs:
 
       - name: Build
         run: |
-          pwd
-          which python3
-          python3 --version
-          echo "ls -l /usr/lib/python3.8"
-          ls -l /usr/lib/python3.8
-          echo "ls -l /usr/lib/x86_64-linux-gnu"
-          ls -l /usr/lib/x86_64-linux-gnu
+          sudo pip3 install numpy
           echo "ls -l /usr/local/lib/python3.8/dist-packages"
           ls -l /usr/local/lib/python3.8/dist-packages
           echo "ls -l /usr/lib/python3/dist-packages"
           ls -l /usr/lib/python3/dist-packages
-          sudo pip3 install numpy
           python3 -m pip install numpy
           PYTHONVER=$(python3 --version | grep -Po "(?<=Python )3.[0-9]+")
           export CGO_CFLAGS="-I${HOME}/.local/lib/python${PYTHONVER}/site-packages/numpy/core/include"
