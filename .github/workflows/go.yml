@@ -17,23 +17,29 @@ jobs:
         with:
           go-version: 1.16
 
-      - name: Build
+      - name: Echo Ubuntu version
         run: |
-          echo "============================="
-          sudo pip3 install numpy
-          ls -l /usr/include/python3.8
-          echo "============================="
-          sudo apt install -y python3-numpy
-          ls -l /usr/include/python3.8
-          echo "============================="
-          python3 -m pip install numpy
-          PYTHONVER=$(python3 --version | grep -Po "(?<=Python )3.[0-9]+")
-          export CGO_CFLAGS="-I${HOME}/.local/lib/python${PYTHONVER}/site-packages/numpy/core/include"
+          cat /etc/os-release
+
+      - name: Build for python 3.8
+        run: |
+          sudo apt-get install -y python3-numpy
           go build -v .
 
-      - name: Test
+      - name: Build for python 3.7
         run: |
-          python3 -m pip install numpy
-          PYTHONVER=$(python3 --version | grep -Po "(?<=Python )3.[0-9]+")
-          export CGO_CFLAGS="-I${HOME}/.local/lib/python${PYTHONVER}/site-packages/numpy/core/include"
-          go test -v .
+          sudo apt-get install -y python3.7 python3.7-dev
+          # python3.7 -m pip install numpy
+          # PYTHONVER=$(python3 --version | grep -Po "(?<=Python )3.[0-9]+")
+          # export CGO_CFLAGS="-I${HOME}/.local/lib/python${PYTHONVER}/site-packages/numpy/core/include"
+          go build -tags=py37 -v .
+      - name: Build for python 3.6
+        run: |
+          sudo apt-get install -y python3.6 python3.6-dev
+          go build --tags=py36 -v .
+      # - name: Test
+      #   run: |
+      #     python3 -m pip install numpy
+      #     PYTHONVER=$(python3 --version | grep -Po "(?<=Python )3.[0-9]+")
+      #     export CGO_CFLAGS="-I${HOME}/.local/lib/python${PYTHONVER}/site-packages/numpy/core/include"
+      #     go test -v .
