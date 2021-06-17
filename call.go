@@ -2,7 +2,8 @@ package gvpy
 
 import (
 	"fmt"
-	"gvpy/python"
+
+	"github.com/bluvec/gvpy/python"
 )
 
 func call(callable *python.PyObject, args ...interface{}) (*python.PyObject, error) {

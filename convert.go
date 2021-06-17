@@ -2,8 +2,9 @@ package gvpy
 
 import (
 	"fmt"
-	"gvpy/python"
 	"reflect"
+
+	"github.com/bluvec/gvpy/python"
 )
 
 type GoToPyConv func(arg interface{}) (*python.PyObject, error)

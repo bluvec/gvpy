@@ -2,9 +2,10 @@ package gvpy
 
 import (
 	"fmt"
-	"gvpy/python"
 	"strconv"
 	"strings"
+
+	"github.com/bluvec/gvpy/python"
 )
 
 type ThreadState python.PyThreadState
