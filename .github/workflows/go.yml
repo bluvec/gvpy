@@ -24,6 +24,11 @@ jobs:
           python3 --version
           ls -l /usr/include
           ls -l /usr/include/python3.8
+          ls -l /usr/lib
+          ls -l /usr/lib/python3.8
+          ls -l /usr/lib/python3.8/site-packages
+          ls -l /usr/lib/x86_64-linux-gnu
+          ls -l /usr/local/lib/python3.8/dist-packages
           python3 -m pip install numpy
           PYTHONVER=$(python3 --version | grep -Po "(?<=Python )3.[0-9]+")
           export CGO_CFLAGS="-I${HOME}/.local/lib/python${PYTHONVER}/site-packages/numpy/core/include"
