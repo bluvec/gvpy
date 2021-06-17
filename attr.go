@@ -2,7 +2,8 @@ package gvpy
 
 import (
 	"fmt"
-	"gvpy/python"
+
+	"github.com/bluvec/gvpy/python"
 )
 
 func getAttr(pyobj *python.PyObject, name string) (*python.PyObject, error) {

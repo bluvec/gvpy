@@ -2,8 +2,9 @@ package gvpy
 
 import (
 	"fmt"
-	"gvpy/python"
 	"runtime"
+
+	"github.com/bluvec/gvpy/python"
 )
 
 type NpyType = python.NpyType
