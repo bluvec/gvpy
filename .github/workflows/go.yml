@@ -19,10 +19,12 @@ jobs:
 
       - name: Build
         run: |
+          pwd
+          which python3
           python3 --version
           python3 -m pip install numpy
-          ls -l $HOME/.local/lib
-          ls -l $HOME/.local/lib/python3.8/site-packages
+          PYTHONVER=$(python3 --version | grep -Po "(?<=Python )3.[0-9]+")
+          export CGO_CFLAGS="-D${HOME}/.local/lib/python${PYTHONVER}/site-packages/numpy/core/include"
           go build -v .
 
       - name: Test
