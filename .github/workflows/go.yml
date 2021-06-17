@@ -20,7 +20,7 @@ jobs:
       - name: Build
         run: |
           python3 --version
-          pip3 install -y numpy
+          python3 -m pip install numpy
           go build -v .
 
       - name: Test
