@@ -21,7 +21,34 @@ func RegPyToGoConv(conv PyToGoConv) {
 	gPyToGo = append(gPyToGo, conv)
 }
 
+// Convert interface{} to python object.
 func GoToPy(arg interface{}) (*python.PyObject, error) {
+	gil := GILEnsure()
+	defer GILRelease(gil)
+
+	return goToPy(arg)
+}
+
+// Convert python object to interface{}.
+func PyToGo(pyobj *python.PyObject) (interface{}, error) {
+	gil := GILEnsure()
+	defer GILRelease(gil)
+
+	return pyToGo(pyobj)
+}
+
+// Lowlevel API: convert interface{} to python object.
+func GoToPyX(arg interface{}) (*python.PyObject, error) {
+	return goToPy(arg)
+}
+
+// Lowlevel API: convert python object to interface{}.
+func PyToGoX(pyobj *python.PyObject) (interface{}, error) {
+	return pyToGo(pyobj)
+}
+
+// Private functions
+func goToPy(arg interface{}) (*python.PyObject, error) {
 	switch val := arg.(type) {
 	// none
 	case nil:
@@ -64,7 +91,7 @@ func GoToPy(arg interface{}) (*python.PyObject, error) {
 			}
 
 			for i := 0; i < nele; i++ {
-				if pv, err := GoToPy(varg.Index(i).Interface()); err != nil {
+				if pv, err := goToPy(varg.Index(i).Interface()); err != nil {
 					return nil, err
 				} else {
 					python.PyList_SetItem(pyList, i, pv)
@@ -85,12 +112,12 @@ func GoToPy(arg interface{}) (*python.PyObject, error) {
 				k := iter.Key().Interface()
 				v := iter.Value().Interface()
 
-				pk, err := GoToPy(k)
+				pk, err := goToPy(k)
 				if err != nil {
 					return nil, err
 				}
 
-				pv, err := GoToPy(v)
+				pv, err := goToPy(v)
 
 				if err != nil {
 					return nil, err
@@ -112,7 +139,7 @@ func GoToPy(arg interface{}) (*python.PyObject, error) {
 	return nil, fmt.Errorf("unsupported type: %+v", reflect.TypeOf(arg))
 }
 
-func PyToGo(pyobj *python.PyObject) (interface{}, error) {
+func pyToGo(pyobj *python.PyObject) (interface{}, error) {
 	if pyobj == python.Py_None {
 		return nil, nil
 	} else if python.PyBool_Check(pyobj) {
@@ -262,7 +289,7 @@ func pyobjectToNonTrivialList(pyobj *python.PyObject) (interface{}, error) {
 	list := make([]interface{}, sz)
 	for i := 0; i < sz; i++ {
 		vi := python.PyList_GetItem(pyobj, i)
-		v, err := PyToGo(vi)
+		v, err := pyToGo(vi)
 		if err != nil {
 			return nil, err
 		}
@@ -276,7 +303,7 @@ func pyobjectToNonTrivialTuple(pyobj *python.PyObject) (interface{}, error) {
 	tuple := make([]interface{}, sz)
 	for i := 0; i < sz; i++ {
 		vi := python.PyTuple_GetItem(pyobj, i)
-		v, err := PyToGo(vi)
+		v, err := pyToGo(vi)
 		if err != nil {
 			return nil, err
 		}
@@ -355,11 +382,11 @@ func pyobjectToNonTrivialDict(pyobj *python.PyObject) (interface{}, error) {
 	var pos int = 0
 
 	for python.PyDict_Next(pyobj, &pos, &pk, &pv) {
-		k, err := PyToGo(pk)
+		k, err := pyToGo(pk)
 		if err != nil {
 			return nil, err
 		}
-		v, err := PyToGo(pv)
+		v, err := pyToGo(pv)
 		if err != nil {
 			return nil, err
 		}

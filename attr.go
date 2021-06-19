@@ -22,7 +22,7 @@ func getVar(pyobj *python.PyObject, name string) (interface{}, error) {
 	}
 	defer attrObj.Py_Clear()
 
-	return PyToGo(attrObj)
+	return pyToGo(attrObj)
 }
 
 func setAttr(pyobj *python.PyObject, name string, pyval *python.PyObject) error {
@@ -30,7 +30,7 @@ func setAttr(pyobj *python.PyObject, name string, pyval *python.PyObject) error 
 }
 
 func setVar(pyobj *python.PyObject, name string, value interface{}) error {
-	pyval, err := GoToPy(value)
+	pyval, err := goToPy(value)
 	if err != nil {
 		return err
 	}

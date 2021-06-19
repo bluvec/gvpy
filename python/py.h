@@ -28,8 +28,8 @@ void __PyErr_Print();
 
 // lifecycle
 void __Py_Initialize();
+void __Py_InitializeEx(int initsigs);
 int __Py_IsInitialized();
-void __Py_Finalize();
 int __Py_FinalizeEx();
 
 char *__Py_GetPath();

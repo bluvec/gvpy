@@ -4,35 +4,26 @@ import (
 	"fmt"
 	"math/rand"
 	"os"
-	"runtime"
 	"testing"
 )
 
 func TestMain(m *testing.M) {
-	runtime.LockOSThread()
 	err := Initialize()
 	if err != nil {
 		fmt.Println("Error to initialize python")
 		os.Exit(1)
 	}
 	AddSysPath("test")
-	tstate := SaveThread()
 
 	rc := m.Run()
 
-	RestoreThread(tstate)
 	Finalize()
-	runtime.UnlockOSThread()
 	os.Exit(rc)
 }
 
 func TestImport(t *testing.T) {
-	runtime.LockOSThread()
-	defer runtime.UnlockOSThread()
-
 	gil := GILEnsure()
 	defer GILRelease(gil)
-
 	fooMod := Import("foo")
 	if fooMod == nil {
 		PyErrPrint()
@@ -40,7 +31,7 @@ func TestImport(t *testing.T) {
 		return
 	}
 	// This line is optional. Go GC will also handle the clear of fooMod.
-	defer fooMod.Clear()
+	defer fooMod.Close()
 
 	t.Log(fooMod)
 	if fooMod.RefCnt() != 2 {
@@ -49,12 +40,6 @@ func TestImport(t *testing.T) {
 }
 
 func TestVar(t *testing.T) {
-	runtime.LockOSThread()
-	defer runtime.UnlockOSThread()
-
-	gil := GILEnsure()
-	defer GILRelease(gil)
-
 	fooMod := Import("foo")
 	if fooMod == nil {
 		PyErrPrint()
@@ -92,12 +77,7 @@ func TestVar(t *testing.T) {
 }
 
 func TestCallFunc(t *testing.T) {
-	runtime.LockOSThread()
-	defer runtime.UnlockOSThread()
-
 	t.Parallel()
-	gil := GILEnsure()
-	defer GILRelease(gil)
 
 	fooFunc := FromImportFunc("foo", "FooFunc")
 	if fooFunc == nil {
@@ -106,7 +86,7 @@ func TestCallFunc(t *testing.T) {
 		return
 	}
 	// This line is optional. Go GC will also handle the clear of fooFunc.
-	defer fooFunc.Clear()
+	defer fooFunc.Close()
 	t.Log(fooFunc)
 
 	_, err := fooFunc.Call()
@@ -123,12 +103,7 @@ func TestCallFunc(t *testing.T) {
 }
 
 func TestCallFuncWithArgs(t *testing.T) {
-	runtime.LockOSThread()
-	defer runtime.UnlockOSThread()
-
 	t.Parallel()
-	gil := GILEnsure()
-	defer GILRelease(gil)
 
 	fooMod := Import("foo")
 
@@ -148,12 +123,7 @@ func TestCallFuncWithArgs(t *testing.T) {
 }
 
 func TestClass(t *testing.T) {
-	runtime.LockOSThread()
-	defer runtime.UnlockOSThread()
-
 	t.Parallel()
-	gil := GILEnsure()
-	defer GILRelease(gil)
 
 	fooClass := FromImportClass("foo", "FooClass")
 	if fooClass == nil {
@@ -162,7 +132,7 @@ func TestClass(t *testing.T) {
 		return
 	}
 	// This line is optional. Go GC will also handle the clear of fooClass.
-	defer fooClass.Clear()
+	defer fooClass.Close()
 	t.Log(fooClass)
 
 	// static variable
@@ -202,7 +172,7 @@ func TestClass(t *testing.T) {
 		return
 	}
 	// This line is optional. Go GC will also handle the clear of fooInst.
-	defer fooInst.Clear()
+	defer fooInst.Close()
 	t.Log(fooInst)
 
 	// instance var
@@ -231,12 +201,6 @@ func TestClass(t *testing.T) {
 }
 
 func TestListAndDict(t *testing.T) {
-	runtime.LockOSThread()
-	defer runtime.UnlockOSThread()
-
-	gil := GILEnsure()
-	defer GILRelease(gil)
-
 	fooMod := Import("foo")
 	if fooMod == nil {
 		PyErrPrint()
@@ -300,11 +264,6 @@ func TestListAndDict(t *testing.T) {
 }
 
 func TestNdarray(t *testing.T) {
-	runtime.LockOSThread()
-	defer runtime.UnlockOSThread()
-
-	gil := GILEnsure()
-	defer GILRelease(gil)
 
 	fooMod := Import("foo")
 	if fooMod == nil {
@@ -364,11 +323,6 @@ func TestNdarray(t *testing.T) {
 }
 
 func TestNdarray2(t *testing.T) {
-	runtime.LockOSThread()
-	defer runtime.UnlockOSThread()
-
-	gil := GILEnsure()
-	defer GILRelease(gil)
 
 	fooMod := Import("foo")
 	if fooMod == nil {
@@ -439,11 +393,7 @@ func TestNdarray2(t *testing.T) {
 }
 
 func TestRunSimpleString(t *testing.T) {
-	runtime.LockOSThread()
-	defer runtime.UnlockOSThread()
-
-	gil := GILEnsure()
-	defer GILRelease(gil)
+	t.Parallel()
 
 	cmd := "import foo; foo.RunSimpleString()"
 	if err := Run(cmd); err != nil {

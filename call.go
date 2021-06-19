@@ -36,7 +36,7 @@ func trivialArgsToPyTuple(args ...interface{}) (*python.PyObject, error) {
 
 	// Create trivial args to PyObject
 	for i := 0; i < nArgs; i++ {
-		if pyarg, err := GoToPy(args[i]); err != nil {
+		if pyarg, err := goToPy(args[i]); err != nil {
 			return nil, err
 		} else if err := python.PyTuple_SetItem(pyTuple, i, pyarg); err != nil {
 			return nil, err

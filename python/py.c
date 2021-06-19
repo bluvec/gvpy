@@ -23,12 +23,12 @@ void __Py_Initialize() {
   Py_Initialize();
 }
 
-int __Py_IsInitialized() {
-  return Py_IsInitialized();
+void __Py_InitializeEx(int initsigs) {
+  Py_InitializeEx(initsigs);
 }
 
-void __Py_Finalize() {
-  Py_Finalize();
+int __Py_IsInitialized() {
+  return Py_IsInitialized();
 }
 
 int __Py_FinalizeEx() {
