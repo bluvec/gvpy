@@ -33,14 +33,19 @@ func TestImport(t *testing.T) {
 	gil := GILEnsure()
 	defer GILRelease(gil)
 
-	fooMod, err := Import("foo")
-	if err != nil {
+	fooMod := Import("foo")
+	if fooMod == nil {
 		PyErrPrint()
-		t.Error(err)
+		t.Error("error: import foo")
 		return
 	}
+	// This line is optional. Go GC will also handle the clear of fooMod.
 	defer fooMod.Clear()
+
 	t.Log(fooMod)
+	if fooMod.RefCnt() != 2 {
+		t.Errorf("incorrect RefCnt: %v", fooMod.RefCnt())
+	}
 }
 
 func TestVar(t *testing.T) {
@@ -50,13 +55,12 @@ func TestVar(t *testing.T) {
 	gil := GILEnsure()
 	defer GILRelease(gil)
 
-	fooMod, err := Import("foo")
-	if err != nil {
+	fooMod := Import("foo")
+	if fooMod == nil {
 		PyErrPrint()
-		t.Error(err)
+		t.Error("error: import foo")
 		return
 	}
-	defer fooMod.Clear()
 	t.Log(fooMod)
 
 	ret, err := fooMod.GetVar("num_pups")
@@ -95,25 +99,26 @@ func TestCallFunc(t *testing.T) {
 	gil := GILEnsure()
 	defer GILRelease(gil)
 
-	fooFunc, err := FromImportFunc("foo", "FooFunc")
-	if err != nil {
+	fooFunc := FromImportFunc("foo", "FooFunc")
+	if fooFunc == nil {
 		PyErrPrint()
-		t.Error(err)
+		t.Error("error: from foo import FooFunc")
 		return
 	}
+	// This line is optional. Go GC will also handle the clear of fooFunc.
 	defer fooFunc.Clear()
 	t.Log(fooFunc)
 
-	_, err = fooFunc.Call()
+	_, err := fooFunc.Call()
 	if err != nil {
 		PyErrPrint()
 		t.Error(err)
 		return
 	}
 
-	_, err = FromImportFunc("foo", "FooFunc2")
-	if err == nil {
-		t.Error("incorrect from import")
+	fooFunc2 := FromImportFunc("foo", "FooFunc2")
+	if fooFunc2 != nil {
+		t.Error("incorrect: from foo import FooFunc2")
 	}
 }
 
@@ -125,8 +130,7 @@ func TestCallFuncWithArgs(t *testing.T) {
 	gil := GILEnsure()
 	defer GILRelease(gil)
 
-	fooMod, _ := Import("foo")
-	defer fooMod.Clear()
+	fooMod := Import("foo")
 
 	name := "Marshal"
 	ret, err := fooMod.CallFunc("BarFunc", name)
@@ -151,12 +155,13 @@ func TestClass(t *testing.T) {
 	gil := GILEnsure()
 	defer GILRelease(gil)
 
-	fooClass, err := FromImportClass("foo", "FooClass")
-	if err != nil {
+	fooClass := FromImportClass("foo", "FooClass")
+	if fooClass == nil {
 		PyErrPrint()
-		t.Error(err)
+		t.Error("error: from foo import FooClass")
 		return
 	}
+	// This line is optional. Go GC will also handle the clear of fooClass.
 	defer fooClass.Clear()
 	t.Log(fooClass)
 
@@ -190,12 +195,13 @@ func TestClass(t *testing.T) {
 	}
 
 	// instance
-	fooInst, err := fooClass.New("Rocky")
-	if err != nil {
+	fooInst := fooClass.New("Rocky")
+	if fooInst == nil {
 		PyErrPrint()
-		t.Error(err)
+		t.Error("error: fooInst = FooClass('Rockey')")
 		return
 	}
+	// This line is optional. Go GC will also handle the clear of fooInst.
 	defer fooInst.Clear()
 	t.Log(fooInst)
 
@@ -231,13 +237,12 @@ func TestListAndDict(t *testing.T) {
 	gil := GILEnsure()
 	defer GILRelease(gil)
 
-	fooMod, err := Import("foo")
-	if err != nil {
+	fooMod := Import("foo")
+	if fooMod == nil {
 		PyErrPrint()
-		t.Error(err)
+		t.Error("error: import foo")
 		return
 	}
-	defer fooMod.Clear()
 
 	// prepare a dict
 	dict := map[string]int{"Marshal": 1, "Rocky": 2, "Chase": 3}
@@ -301,13 +306,12 @@ func TestNdarray(t *testing.T) {
 	gil := GILEnsure()
 	defer GILRelease(gil)
 
-	fooMod, err := Import("foo")
-	if err != nil {
+	fooMod := Import("foo")
+	if fooMod == nil {
 		PyErrPrint()
-		t.Error(err)
+		t.Error("error: import foo")
 		return
 	}
-	defer fooMod.Clear()
 
 	x := make([]int, 10)
 	y := make([]int, 10)
@@ -366,13 +370,12 @@ func TestNdarray2(t *testing.T) {
 	gil := GILEnsure()
 	defer GILRelease(gil)
 
-	fooMod, err := Import("foo")
-	if err != nil {
+	fooMod := Import("foo")
+	if fooMod == nil {
 		PyErrPrint()
-		t.Error(err)
+		t.Error("error: import foo")
 		return
 	}
-	defer fooMod.Clear()
 
 	x := make([]complex64, 10)
 	y := make([]complex64, 10)

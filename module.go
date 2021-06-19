@@ -6,15 +6,34 @@ import (
 	"github.com/bluvec/gvpy/python"
 )
 
-type GpModule struct {
-	pyobj *python.PyObject
+type GpModule interface {
+	GpObject
+
+	GetVar(name string) (interface{}, error)
+	SetVar(name string, value interface{}) error
+	GetClassVar(class, name string) (interface{}, error)
+	SetClassVar(class, name string, value interface{}) error
+	GetFunc(name string) GpFunc
+	CallFunc(name string, args ...interface{}) (interface{}, error)
+	GetClass(name string) GpClass
+	New(class string, args ...interface{}) GpInstance
 }
 
-func Import(name string) (*GpModule, error) {
+type gpModule struct {
+	gpObject
+}
+
+func newGpModule(pyobj *python.PyObject) GpModule {
+	m := gpModule{gpObject{pyobj: pyobj}}
+	m.setFinalizer()
+	return &m
+}
+
+func Import(name string) GpModule {
 	if m := python.PyImport_ImportModule(name); m == nil {
-		return nil, fmt.Errorf("error to import module '%v'", name)
+		return nil
 	} else {
-		return &GpModule{pyobj: m}, nil
+		return newGpModule(m)
 	}
 }
 
@@ -39,104 +58,107 @@ func fromImport(from, name string) (*python.PyObject, error) {
 	return m, nil
 }
 
-func FromImport(from, name string) (*GpModule, error) {
+func FromImport(from, name string) GpModule {
 	m, err := fromImport(from, name)
 	if err != nil {
-		return nil, err
+		return nil
 	}
 
 	if !python.PyModule_Check(m) {
 		defer m.Py_Clear()
-		return nil, fmt.Errorf("error to import: %v is not a module", m)
+		return nil
 	}
 
-	return &GpModule{pyobj: m}, nil
+	return newGpModule(m)
 }
 
-func FromImportFunc(from, name string) (*GpFunc, error) {
+func FromImportFunc(from, name string) GpFunc {
 	f, err := fromImport(from, name)
 	if err != nil {
-		return nil, err
+		return nil
 	}
 
 	if !python.PyFunction_Check(f) {
 		defer f.Py_Clear()
-		return nil, fmt.Errorf("error to import: %v is not a function", f)
+		return nil
 	}
 
-	return &GpFunc{pyobj: f}, nil
+	return newGpFunc(f)
 }
 
-func FromImportClass(from, name string) (*GpClass, error) {
+func FromImportClass(from, name string) GpClass {
 	c, err := fromImport(from, name)
 	if err != nil {
-		return nil, err
+		return nil
 	}
+
 	if !python.PyClass_Check(c) {
 		defer c.Py_Clear()
-		return nil, fmt.Errorf("error to import: %v is not a class", c)
+		return nil
 	}
 
-	return &GpClass{pyobj: c}, err
+	return newGpClass(c)
 }
 
-func (m *GpModule) String() string {
-	return m.pyobj.String()
-}
-
-func (m *GpModule) Clear() {
-	m.pyobj.Py_Clear()
-}
-
-func (m *GpModule) GetVar(name string) (interface{}, error) {
+func (m *gpModule) GetVar(name string) (interface{}, error) {
 	return getVar(m.pyobj, name)
 }
 
-func (m *GpModule) SetVar(name string, value interface{}) error {
+func (m *gpModule) SetVar(name string, value interface{}) error {
 	return setVar(m.pyobj, name, value)
 }
 
-func (m *GpModule) GetClassVar(class, name string) (interface{}, error) {
+func (m *gpModule) GetClassVar(class, name string) (interface{}, error) {
 	panic("not implemented")
 }
 
-func (m *GpModule) SetClassVar(class, name string, value interface{}) error {
+func (m *gpModule) SetClassVar(class, name string, value interface{}) error {
 	panic("not implemented")
 }
 
-func (m *GpModule) GetFunc(name string) (*GpFunc, error) {
-	if f := m.pyobj.GetAttrString(name); f == nil {
-		return nil, fmt.Errorf("error to get func '%v.%v'", m, name)
-	} else {
-		return &GpFunc{pyobj: f}, nil
+func (m *gpModule) GetFunc(name string) GpFunc {
+	pyobj := m.pyobj.GetAttrString(name)
+	if pyobj == nil {
+		return nil
 	}
+
+	if !python.PyFunction_Check(pyobj) {
+		defer pyobj.Py_Clear()
+		return nil
+	}
+
+	return newGpFunc(pyobj)
 }
 
-func (m *GpModule) CallFunc(name string, args ...interface{}) (interface{}, error) {
-	gf, err := m.GetFunc(name)
-	if err != nil {
-		return nil, err
+func (m *gpModule) CallFunc(name string, args ...interface{}) (interface{}, error) {
+	f := m.GetFunc(name)
+	if f == nil {
+		return nil, fmt.Errorf("error to get func %v", name)
 	}
-	defer gf.Clear()
 
-	return gf.Call(args...)
+	return f.Call(args...)
 }
 
-func (m *GpModule) GetClass(name string) (*GpClass, error) {
-	if c := m.pyobj.GetAttrString(name); c == nil {
-		return nil, fmt.Errorf("error to get class '%v.%v'", m, name)
-	} else {
-		return &GpClass{pyobj: c}, nil
+func (m *gpModule) GetClass(name string) GpClass {
+	pyobj := m.pyobj.GetAttrString(name)
+	if pyobj == nil {
+		return nil
 	}
+
+	if !python.PyClass_Check(pyobj) {
+		defer pyobj.Py_Clear()
+		return nil
+	}
+
+	return newGpClass(pyobj)
 }
 
 // New an instance of a class
-func (m *GpModule) New(class string, args ...interface{}) (*GpInstance, error) {
-	gc, err := m.GetClass(class)
-	if err != nil {
-		return nil, err
+func (m *gpModule) New(class string, args ...interface{}) GpInstance {
+	c := m.GetClass(class)
+	if c == nil {
+		return nil
 	}
-	defer gc.Clear()
 
-	return gc.New(args...)
+	return c.New(args...)
 }

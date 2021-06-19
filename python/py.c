@@ -124,6 +124,10 @@ void __Py_XDECREF(PyObject *o) {
   Py_XDECREF(o);
 }
 
+Py_ssize_t __Py_REFCNT(PyObject *o) {
+  return Py_REFCNT(o);
+}
+
 PyTypeObject *__Py_TYPE(PyObject *o) {
   return Py_TYPE(o);
 }
