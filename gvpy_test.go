@@ -434,3 +434,17 @@ func TestNdarray2(t *testing.T) {
 		}
 	}
 }
+
+func TestRunSimpleString(t *testing.T) {
+	runtime.LockOSThread()
+	defer runtime.UnlockOSThread()
+
+	gil := GILEnsure()
+	defer GILRelease(gil)
+
+	cmd := "import foo; foo.RunSimpleString()"
+	if err := Run(cmd); err != nil {
+		PyErrPrint()
+		t.Error(err)
+	}
+}
