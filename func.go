@@ -6,20 +6,24 @@ import (
 	"github.com/bluvec/gvpy/python"
 )
 
-type GpFunc struct {
-	pyobj *python.PyObject
+type GpFunc interface {
+	GpObject
+
+	Call(args ...interface{}) (interface{}, error)
 }
 
-func (f *GpFunc) String() string {
-	return f.pyobj.String()
+type gpFunc struct {
+	gpObject
 }
 
-func (f *GpFunc) Clear() {
-	f.pyobj.Py_Clear()
+func newGpFunc(pyobj *python.PyObject) GpFunc {
+	f := gpFunc{gpObject{pyobj: pyobj}}
+	f.setFinalizer()
+	return &f
 }
 
 // Call a function with trivial arguments and returns.
-func (f *GpFunc) Call(args ...interface{}) (interface{}, error) {
+func (f *gpFunc) Call(args ...interface{}) (interface{}, error) {
 	retObj, err := call(f.pyobj, args...)
 	if err != nil {
 		return nil, fmt.Errorf("error to call func '%v', err: '%v'", f, err)

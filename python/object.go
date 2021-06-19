@@ -56,6 +56,10 @@ func Py_XDECREF(o *PyObject) {
 	}
 }
 
+func Py_REFCNT(o *PyObject) int {
+	return int(C.__Py_REFCNT(go2c(o)))
+}
+
 func Py_CLEAR(o *PyObject) {
 	if o != nil && o != Py_None && o != Py_True && o != Py_False {
 		C.__Py_CLEAR(go2c(o))
@@ -64,6 +68,10 @@ func Py_CLEAR(o *PyObject) {
 
 func (o *PyObject) Py_Clear() {
 	Py_CLEAR(o)
+}
+
+func (o *PyObject) Py_RefCnt() int {
+	return Py_REFCNT(o)
 }
 
 func (o *PyObject) Str() *PyObject {

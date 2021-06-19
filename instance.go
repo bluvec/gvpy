@@ -1,28 +1,32 @@
 package gvpy
 
 import (
-	"fmt"
-
 	"github.com/bluvec/gvpy/python"
 )
 
-type GpInstance struct {
-	pyobj *python.PyObject
+type GpInstance interface {
+	GpObject
+
+	Call(methName string, args ...interface{}) (interface{}, error)
+	GetVar(name string) (interface{}, error)
+	SetVar(name string, value interface{}) error
 }
 
-func (i *GpInstance) String() string {
-	return i.pyobj.String()
+type gpInstance struct {
+	gpObject
 }
 
-func (i *GpInstance) Clear() {
-	i.pyobj.Py_Clear()
+func newGpInstance(pyobj *python.PyObject) GpInstance {
+	i := gpInstance{gpObject{pyobj: pyobj}}
+	i.setFinalizer()
+	return &i
 }
 
 // Call an instance method
-func (i *GpInstance) Call(methName string, args ...interface{}) (interface{}, error) {
+func (i *gpInstance) Call(methName string, args ...interface{}) (interface{}, error) {
 	methObj, err := getAttr(i.pyobj, methName)
 	if err != nil {
-		return nil, fmt.Errorf("error to call method '%v.%v', err: '%v'", i, methName, err)
+		return nil, err
 	}
 	defer methObj.Py_Clear()
 
@@ -35,10 +39,10 @@ func (i *GpInstance) Call(methName string, args ...interface{}) (interface{}, er
 	return PyToGo(retObj)
 }
 
-func (i *GpInstance) GetVar(name string) (interface{}, error) {
+func (i *gpInstance) GetVar(name string) (interface{}, error) {
 	return getVar(i.pyobj, name)
 }
 
-func (i *GpInstance) SetVar(name string, value interface{}) error {
+func (i *gpInstance) SetVar(name string, value interface{}) error {
 	return setVar(i.pyobj, name, value)
 }

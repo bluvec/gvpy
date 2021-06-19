@@ -62,6 +62,7 @@ PyObject *__Py_None();
 void __Py_CLEAR(PyObject *o);
 void __Py_XINCREF(PyObject *o);
 void __Py_XDECREF(PyObject *o);
+Py_ssize_t __Py_REFCNT(PyObject *o);
 
 PyTypeObject *__Py_TYPE(PyObject *o);
 
