@@ -38,3 +38,7 @@ def DictKeysAndValues(d: dict):
 def NdarrayAdd(x: np.ndarray, y: np.ndarray) -> np.ndarray:
     z = x + y
     return z
+
+
+def RunSimpleString():
+    print("Python: run simple string")

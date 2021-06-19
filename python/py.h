@@ -54,6 +54,9 @@ void __PyEval_InitThreads();
 PyThreadState *__PyEval_SaveThread();
 void __PyEval_RestoreThread(PyThreadState *tstate);
 
+// pythonrun
+int __PyRun_SimpleString(const char *command);
+
 // object
 PyObject *__Py_None();
 void __Py_CLEAR(PyObject *o);

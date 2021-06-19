@@ -102,6 +102,11 @@ void __PyEval_RestoreThread(PyThreadState *tstate) {
   PyEval_RestoreThread(tstate);
 }
 
+// pythonrun
+int __PyRun_SimpleString(const char *command) {
+  return PyRun_SimpleString(command);
+}
+
 // object
 PyObject *__Py_None() {
   return Py_None;
