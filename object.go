@@ -18,10 +18,6 @@ type GpObject interface {
 	// Lowlevel APIs
 	RefCntX() int
 	CloseX()
-	StringX() string
-
-	// Private methods
-	setFinalizer()
 }
 
 type gpObject struct {
@@ -51,13 +47,11 @@ func (o *gpObject) String() string {
 	gil := GILEnsure()
 	defer GILRelease(gil)
 
-	return o.StringX()
+	return o.pyobj.String()
 }
 
 func (o *gpObject) setFinalizer() {
-	runtime.SetFinalizer(o, func(o *gpObject) {
-		o.Close()
-	})
+	runtime.SetFinalizer(o, func(o *gpObject) { o.Close() })
 }
 
 // Lowlevel APIs
@@ -70,8 +64,4 @@ func (o *gpObject) CloseX() {
 	if pyobj != nil {
 		(*python.PyObject)(pyobj).Py_Clear()
 	}
-}
-
-func (o *gpObject) StringX() string {
-	return o.pyobj.String()
 }
