@@ -561,7 +561,9 @@ func (arr *ndarray) AsSliceX_complex128() []complex128 {
 // Private functions
 ///////////////////////////////////////////////////////////////
 func (arr *ndarray) setFinalizer() {
-	runtime.SetFinalizer(arr, func(arr *ndarray) { arr.close() })
+	if gcEnabled {
+		runtime.SetFinalizer(arr, func(arr *ndarray) { arr.close() })
+	}
 }
 
 func (arr *ndarray) close() {

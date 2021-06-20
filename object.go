@@ -51,7 +51,9 @@ func (o *gpObject) String() string {
 }
 
 func (o *gpObject) setFinalizer() {
-	runtime.SetFinalizer(o, func(o *gpObject) { o.Close() })
+	if gcEnabled {
+		runtime.SetFinalizer(o, func(o *gpObject) { o.Close() })
+	}
 }
 
 // Lowlevel APIs
@@ -62,6 +64,6 @@ func (o *gpObject) RefCntX() int {
 func (o *gpObject) CloseX() {
 	pyobj := atomic.SwapPointer((*unsafe.Pointer)(unsafe.Pointer(&o.pyobj)), nil)
 	if pyobj != nil {
-		(*python.PyObject)(pyobj).Py_Clear()
+		python.Py_CLEAR((*python.PyObject)(pyobj))
 	}
 }

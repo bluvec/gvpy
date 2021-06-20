@@ -12,20 +12,46 @@ import (
 type ThreadState python.PyThreadState
 type GILState python.PyGILState_STATE
 
-func Initialize() error {
-	runtime.LockOSThread()
-	defer runtime.UnlockOSThread()
+var gcEnabled bool = false
+var gThreadState ThreadState
 
-	err := InitializeX()
-	if err != nil {
-		return err
+func Initialize() error {
+	return Initialize2(true)
+}
+
+func Initialize2(enableGC bool) error {
+	gcEnabled = enableGC
+
+	if enableGC {
+		runtime.LockOSThread()
+		defer runtime.UnlockOSThread()
+
+		err := InitializeX()
+		if err != nil {
+			return err
+		}
+		SaveThreadX()
+		return nil
+	} else {
+		runtime.LockOSThread()
+
+		err := InitializeX()
+		if err != nil {
+			return err
+		}
+		gThreadState = SaveThreadX()
+		return nil
 	}
-	SaveThreadX()
-	return nil
 }
 
 func Finalize() {
-	Run("import sys; sys.stdout.flush()")
+	if gcEnabled {
+		Run("import sys; sys.stdout.flush()")
+	} else {
+		RestoreThreadX(gThreadState)
+		FinalizeX()
+		runtime.UnlockOSThread()
+	}
 }
 
 func (gil GILState) String() string {
