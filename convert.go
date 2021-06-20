@@ -74,8 +74,10 @@ func goToPy(arg interface{}) (*python.PyObject, error) {
 
 	// numpy.ndarray
 	case *ndarray:
-		python.Py_XINCREF(val.arr)
-		return val.arr, nil
+		arr := val.arr
+		val.arr = nil
+
+		return arr, nil
 
 	// complex combinations
 	default:
