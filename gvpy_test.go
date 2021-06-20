@@ -22,8 +22,6 @@ func TestMain(m *testing.M) {
 }
 
 func TestImport(t *testing.T) {
-	gil := GILEnsure()
-	defer GILRelease(gil)
 	fooMod := Import("foo")
 	if fooMod == nil {
 		PyErrPrint()
@@ -99,6 +97,9 @@ func TestCallFunc(t *testing.T) {
 	fooFunc2 := FromImportFunc("foo", "FooFunc2")
 	if fooFunc2 != nil {
 		t.Error("incorrect: from foo import FooFunc2")
+	} else {
+		fmt.Println("The following error should exists:")
+		PyErrPrint()
 	}
 }
 

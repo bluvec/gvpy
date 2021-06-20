@@ -13,7 +13,7 @@ func PyRun_SimpleString(cmd string) error {
 
 	rc := int(C.__PyRun_SimpleString(cCmd))
 	if rc != 0 {
-		return fmt.Errorf("error to call PyRun_SimpleString(%v)", cmd)
+		return fmt.Errorf("error to call PyRun_SimpleString('%v')", cmd)
 	}
 
 	return nil

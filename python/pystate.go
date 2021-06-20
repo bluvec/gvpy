@@ -26,3 +26,12 @@ func PyGILState_Ensure() PyGILState_STATE {
 func PyGILState_Release(s PyGILState_STATE) {
 	C.__PyGILState_Release(s.s)
 }
+
+func (gil PyGILState_STATE) String() string {
+	if gil.s == C.int(0) {
+		return "PyGILState_LOCKED"
+	} else {
+		return "PyGILState_UNLOCKED"
+	}
+
+}

@@ -1,6 +1,8 @@
 package gvpy
 
-import "github.com/bluvec/gvpy/python"
+import (
+	"github.com/bluvec/gvpy/python"
+)
 
 // Run a simple stirng.
 func Run(cmd string) error {
@@ -12,5 +14,6 @@ func Run(cmd string) error {
 
 // Lowlevel API: run a simple string.
 func RunX(cmd string) error {
+	python.PyErr_Clear()
 	return python.PyRun_SimpleString(cmd)
 }

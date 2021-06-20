@@ -12,28 +12,30 @@ import (
 type ThreadState python.PyThreadState
 type GILState python.PyGILState_STATE
 
-var gThreadState ThreadState
-
 func Initialize() error {
 	runtime.LockOSThread()
+	defer runtime.UnlockOSThread()
+
 	err := InitializeX()
 	if err != nil {
 		return err
 	}
-	gThreadState = SaveThreadX()
+	SaveThreadX()
 	return nil
 }
 
 func Finalize() {
-	runtime.GC()
-	RestoreThreadX(gThreadState)
-	FinalizeX()
-	runtime.UnlockOSThread()
+	Run("import sys; sys.stdout.flush()")
+}
+
+func (gil GILState) String() string {
+	return python.PyGILState_STATE(gil).String()
 }
 
 func GILEnsure() GILState {
 	runtime.LockOSThread()
-	return GILEnsureX()
+	gil := GILEnsureX()
+	return gil
 }
 
 func GILRelease(s GILState) {
@@ -50,6 +52,13 @@ func PyErrPrint() {
 	defer GILRelease(gil)
 
 	python.PyErr_Print()
+}
+
+func PyErrClear() {
+	gil := GILEnsure()
+	defer GILRelease(gil)
+
+	python.PyErr_Clear()
 }
 
 func GetVersion() string {

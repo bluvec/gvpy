@@ -25,6 +25,7 @@ typedef int __PyGILState_STATE;
 PyObject *__PyErr_Occurred();
 void __PyErr_PrintEx(int set_sys_last_vars);
 void __PyErr_Print();
+void __PyErr_Clear();
 
 // lifecycle
 void __Py_Initialize();

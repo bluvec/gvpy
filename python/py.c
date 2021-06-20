@@ -5,6 +5,8 @@
 #define NPY_NO_DEPRECATED_API NPY_1_7_API_VERSION
 #include "numpy/arrayobject.h"
 
+#include <stdio.h>
+
 // error
 PyObject *__PyErr_Occurred() {
   return PyErr_Occurred();
@@ -16,6 +18,10 @@ void __PyErr_PrintEx(int set_sys_last_vars) {
 
 void __PyErr_Print() {
   PyErr_Print();
+}
+
+void __PyErr_Clear() {
+  PyErr_Clear();
 }
 
 // lifecycle
