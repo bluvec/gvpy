@@ -25,11 +25,12 @@ typedef int __PyGILState_STATE;
 PyObject *__PyErr_Occurred();
 void __PyErr_PrintEx(int set_sys_last_vars);
 void __PyErr_Print();
+void __PyErr_Clear();
 
 // lifecycle
 void __Py_Initialize();
+void __Py_InitializeEx(int initsigs);
 int __Py_IsInitialized();
-void __Py_Finalize();
 int __Py_FinalizeEx();
 
 char *__Py_GetPath();

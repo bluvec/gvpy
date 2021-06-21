@@ -11,14 +11,14 @@ func Py_Initialize() {
 	C.__Py_Initialize()
 }
 
+// void Py_InitializeEx(int initsigs)
+func Py_InitializeEx(initsigs int) {
+	C.__Py_InitializeEx(C.int(initsigs))
+}
+
 // int Py_IsInitialized()
 func Py_IsInitialized() bool {
 	return int(C.__Py_IsInitialized()) != 0
-}
-
-// void Py_Finalize()
-func Py_Finalize() {
-	C.__Py_Finalize()
 }
 
 // int Py_FinalizeEx()

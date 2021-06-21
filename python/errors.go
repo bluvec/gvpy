@@ -18,3 +18,8 @@ func PyErr_PrintEx(set_sys_last_vars int) {
 func PyErr_Print() {
 	C.__PyErr_Print()
 }
+
+// Ref: https://docs.python.org/3/c-api/exceptions.html#c.PyErr_Clear
+func PyErr_Clear() {
+	C.__PyErr_Clear()
+}

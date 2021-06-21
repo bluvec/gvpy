@@ -13,37 +13,57 @@ type GpObject interface {
 	fmt.Stringer
 
 	RefCnt() int
-	Clear()
+	Close()
 
-	setFinalizer()
+	// Lowlevel APIs
+	RefCntX() int
+	CloseX()
 }
 
 type gpObject struct {
 	pyobj *python.PyObject
 }
 
+// Get the reference count of a python object.
 func (o *gpObject) RefCnt() int {
-	return o.pyobj.Py_RefCnt()
+	gil := GILEnsure()
+	defer GILRelease(gil)
+
+	return o.RefCntX()
 }
 
-func (o *gpObject) Clear() {
+// Close the python object. This function is not necessary to call.
+// The golang GC will recycle the unreferenced python object automatically.
+func (o *gpObject) Close() {
 	pyobj := atomic.SwapPointer((*unsafe.Pointer)(unsafe.Pointer(&o.pyobj)), nil)
 	if pyobj != nil {
+		gil := GILEnsure()
 		(*python.PyObject)(pyobj).Py_Clear()
+		GILRelease(gil)
 	}
 }
 
 func (o *gpObject) String() string {
+	gil := GILEnsure()
+	defer GILRelease(gil)
+
 	return o.pyobj.String()
 }
 
 func (o *gpObject) setFinalizer() {
-	runtime.SetFinalizer(o, func(o *gpObject) {
-		runtime.LockOSThread()
-		defer runtime.UnlockOSThread()
-		gil := GILEnsure()
-		defer GILRelease(gil)
+	if gcEnabled {
+		runtime.SetFinalizer(o, func(o *gpObject) { o.Close() })
+	}
+}
 
-		o.Clear()
-	})
+// Lowlevel APIs
+func (o *gpObject) RefCntX() int {
+	return o.pyobj.Py_RefCnt()
+}
+
+func (o *gpObject) CloseX() {
+	pyobj := atomic.SwapPointer((*unsafe.Pointer)(unsafe.Pointer(&o.pyobj)), nil)
+	if pyobj != nil {
+		python.Py_CLEAR((*python.PyObject)(pyobj))
+	}
 }

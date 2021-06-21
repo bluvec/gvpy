@@ -5,6 +5,8 @@
 #define NPY_NO_DEPRECATED_API NPY_1_7_API_VERSION
 #include "numpy/arrayobject.h"
 
+#include <stdio.h>
+
 // error
 PyObject *__PyErr_Occurred() {
   return PyErr_Occurred();
@@ -18,17 +20,21 @@ void __PyErr_Print() {
   PyErr_Print();
 }
 
+void __PyErr_Clear() {
+  PyErr_Clear();
+}
+
 // lifecycle
 void __Py_Initialize() {
   Py_Initialize();
 }
 
-int __Py_IsInitialized() {
-  return Py_IsInitialized();
+void __Py_InitializeEx(int initsigs) {
+  Py_InitializeEx(initsigs);
 }
 
-void __Py_Finalize() {
-  Py_Finalize();
+int __Py_IsInitialized() {
+  return Py_IsInitialized();
 }
 
 int __Py_FinalizeEx() {
