@@ -54,8 +54,45 @@ $ go get -u -tags py37 github.com/bluvec/gvpy # get gvpy with python3.7
 ```
 
 ## Examples
+All examples listed below are under the folder [example](https://github.com/bluvec/gvpy/tree/main/example).
+* Hello, gvpy!
+  ```golang
+  package main
+  
+  import (
+  	"fmt"
+  
+  	"github.com/bluvec/gvpy"
+  )
+  
+  func main() {
+  	if err := gvpy.Initialize(); err != nil {
+  		fmt.Println("error to initialize gvpy")
+  		return
+  	}
+  	gvpy.AddSysPath(".")
+  
+  	fooMod := gvpy.Import("foo")
+  	if fooMod == nil {
+  		gvpy.PyErrPrint()
+  		return
+  	}
+  
+  	fooMod.CallFunc("SayHello")
+  }
+  ```
+  ```python
+  # foo.py
+  def SayHello():
+      print("Hello, gvpy!")
+  ```
 
+  ```bash
+  $ go run main.go
+  Hello, gvpy!
+  ```
 ## Notes on using lowlevel APIs
+TODO
 ### Global Interpreter Lock (GIL)
 
 ### Golang thread scheduler
