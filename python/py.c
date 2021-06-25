@@ -7,6 +7,27 @@
 
 #include <stdio.h>
 
+// patchlevel
+char *__Py_VERSION() {
+  return PY_VERSION;
+}
+
+int __Py_VERSION_HEX() {
+  return PY_VERSION_HEX;
+}
+
+int __Py_MAJOR_VERSION() {
+  return PY_MAJOR_VERSION;
+}
+
+int __Py_MINOR_VERSION() {
+  return PY_MINOR_VERSION;
+}
+
+int __Py_MICRO_VERSION() {
+  return PY_MICRO_VERSION;
+}
+
 // error
 PyObject *__PyErr_Occurred() {
   return PyErr_Occurred();
@@ -93,11 +114,17 @@ void __PyGILState_Release(__PyGILState_STATE s) {
 
 // ceval
 int __PyEval_ThreadsInitialized() {
+#if PY_VERSION_HEX < 0x03090000
   return PyEval_ThreadsInitialized();
+#else
+  return 0;
+#endif
 }
 
 void __PyEval_InitThreads() {
+#if PY_VERSION_HEX < 0x03090000
   PyEval_InitThreads();
+#endif
 }
 
 PyThreadState *__PyEval_SaveThread() {
