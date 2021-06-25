@@ -11,7 +11,7 @@ Gvpy provides scalable high-level APIs to call python codes from golang. Compare
 
 **NOTES**
 * Gvpy only supports python3.
-* Gvpy is currently only tested in Linux systems. MacOSX and Windows supported will be added in the near future.
+* Gvpy is currently only tested in Linux systems. The MacOSX and Windows supports will be added in the near future.
 * Gvpy is only tested with python >=3.6.
 * Gvpy is still under heavy development. Every API is subject to change before stable.
 
