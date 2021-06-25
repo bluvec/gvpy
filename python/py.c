@@ -117,7 +117,7 @@ int __PyEval_ThreadsInitialized() {
 #if PY_VERSION_HEX < 0x03090000
   return PyEval_ThreadsInitialized();
 #else
-  return 0;
+  return 1;
 #endif
 }
 
