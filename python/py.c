@@ -226,7 +226,7 @@ int __PyFloat_Check(PyObject *o) {
 }
 
 double __PyFloat_AsDouble(PyObject *pyfloat) {
-  double r = PyFloat_AsDouble(pyfloat);
+  return PyFloat_AsDouble(pyfloat);
 }
 
 PyObject *__PyFloat_FromDouble(double v) {
