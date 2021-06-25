@@ -21,6 +21,14 @@ typedef intptr_t npy_intp;
 typedef ssize_t Py_ssize_t;
 typedef int __PyGILState_STATE;
 
+// patchlevel
+char *__Py_VERSION();
+int __Py_VERSION_HEX();
+
+int __Py_MAJOR_VERSION();
+int __Py_MINOR_VERSION();
+int __Py_MICRO_VERSION();
+
 // error
 PyObject *__PyErr_Occurred();
 void __PyErr_PrintEx(int set_sys_last_vars);

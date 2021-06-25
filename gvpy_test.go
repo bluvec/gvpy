@@ -21,6 +21,24 @@ func TestMain(m *testing.M) {
 	os.Exit(rc)
 }
 
+func TestVersion(t *testing.T) {
+	ver := PyVersion()
+	verHex := PyVersionHex()
+	verList := PyVersionList()
+
+	if len(verList) != 3 {
+		t.Errorf("error: version list len, %v", verList)
+	}
+
+	if (verHex & 0xFFFFFF00) != ((verList[0] << 24) | (verList[1] << 16) | (verList[2] << 8)) {
+		t.Errorf("error: version mismatch, %v, %v", verHex, verList)
+	}
+
+	if ver != fmt.Sprintf("%v.%v.%v", verList[0], verList[1], verList[2]) {
+		t.Errorf("error: version mismatch, %v, %v", ver, verList)
+	}
+}
+
 func TestImport(t *testing.T) {
 	fooMod := Import("foo")
 	if fooMod == nil {

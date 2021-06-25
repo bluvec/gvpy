@@ -3,7 +3,6 @@ package gvpy
 import (
 	"fmt"
 	"runtime"
-	"strconv"
 	"strings"
 
 	"github.com/bluvec/gvpy/python"
@@ -87,25 +86,20 @@ func PyErrClear() {
 	python.PyErr_Clear()
 }
 
-func GetVersion() string {
+func PyVersionDetail() string {
 	return python.Py_GetVersion()
 }
 
-func GetPyVersion() []int {
-	verStr := GetVersion()
-	pyVerStr := verStr[0:strings.Index(verStr, " ")]
-	pyVerStrList := strings.Split(pyVerStr, ".")
+func PyVersion() string {
+	return python.Py_Version()
+}
 
-	var err error
-	pyVerIntList := make([]int, len(pyVerStrList))
+func PyVersionHex() int {
+	return python.Py_VersionHex()
+}
 
-	for i := range pyVerStrList {
-		if pyVerIntList[i], err = strconv.Atoi(pyVerStrList[i]); err != nil {
-			return nil
-		}
-	}
-
-	return pyVerIntList
+func PyVersionList() []int {
+	return []int{python.Py_VersionMajor(), python.Py_VersionMinor(), python.Py_VersionMicro()}
 }
 
 func GetPath() string {
@@ -183,6 +177,15 @@ func InitializeX() error {
 		return fmt.Errorf("gvpy: error to initialize the python interpreter")
 	}
 
+	// Ref: https://docs.python.org/3/c-api/init.html?#c.PyEval_InitThreads
+	// make sure the GIL is correctly initialized: python < 3.7
+	if python.Py_VersionHex() < 0x03070000 {
+		python.PyEval_InitThreads()
+		if !python.PyEval_ThreadsInitialized() {
+			return fmt.Errorf("gvpy: error to initialize the python GIL")
+		}
+	}
+
 	// Initialize numpy module and PyArray functions
 	return python.PyArray_import_array()
 }
@@ -190,17 +193,6 @@ func InitializeX() error {
 // Low-level API: use Finalize if possible.
 func FinalizeX() {
 	python.Py_FinalizeEx()
-}
-
-// Ref: https://docs.python.org/3/c-api/init.html?#c.PyEval_InitThreads
-// make sure the GIL is correctly initialized: python < 3.7
-// Call this function to initialize GIL if your python version is less than 3.7.
-func InitThreadsX() error {
-	python.PyEval_InitThreads()
-	if !python.PyEval_ThreadsInitialized() {
-		return fmt.Errorf("gvpy: error to initialize the python GIL")
-	}
-	return nil
 }
 
 // Low-level API: use GILEnsure if possible.
