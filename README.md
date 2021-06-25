@@ -5,7 +5,7 @@
 [![Go Report Card](https://goreportcard.com/badge/github.com/bluvec/gvpy)](https://goreportcard.com/report/github.com/bluvec/gvpy)
 [![License](https://img.shields.io/github/license/bluvec/gvpy)](https://raw.githubusercontent.com/bluvec/gvpy/readme/LICENSE)
 
-**Gvpy** is short from **G**o **V**isits **PY**thon.
+**Gvpy** is short for **G**o **V**isits **PY**thon.
 
 Gvpy provides scalable high-level APIs to call python codes from golang. Compared to [go-python3]([go-python3](https://github.com/DataDog/go-python3)) which provides the low-level golang bindings for the C-API of cpython, gvpy is easier to use and memory safer due to the help of golang garbage collector. Moreover, the _numpy_ package is also supported by gvpy.
 
