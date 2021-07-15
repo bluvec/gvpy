@@ -50,6 +50,7 @@ const (
 
 type Ndarray interface {
 	fmt.Stringer
+	PyObjectGetter
 
 	Ndim() int
 	Shape() []int
@@ -243,6 +244,10 @@ func (arr *ndarray) String() string {
 	defer GILRelease(gil)
 
 	return arr.arr.String()
+}
+
+func (arr *ndarray) PyObject() *python.PyObject {
+	return arr.arr
 }
 
 func (arr *ndarray) Ndim() int {
