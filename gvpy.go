@@ -19,28 +19,18 @@ func Initialize() error {
 }
 
 func Initialize2(enableGC bool) error {
+	runtime.LockOSThread()
+
 	gcEnabled = enableGC
 
-	if enableGC {
-		runtime.LockOSThread()
-		defer runtime.UnlockOSThread()
-
-		err := InitializeX()
-		if err != nil {
-			return err
-		}
-		SaveThreadX()
-		return nil
-	} else {
-		runtime.LockOSThread()
-
-		err := InitializeX()
-		if err != nil {
-			return err
-		}
-		gThreadState = SaveThreadX()
-		return nil
+	err := InitializeX()
+	if err != nil {
+		return err
 	}
+
+	gThreadState = SaveThreadX()
+
+	return nil
 }
 
 func Finalize() {
@@ -49,8 +39,9 @@ func Finalize() {
 	} else {
 		RestoreThreadX(gThreadState)
 		FinalizeX()
-		runtime.UnlockOSThread()
 	}
+
+	runtime.UnlockOSThread()
 }
 
 func (gil GILState) String() string {
